@@ -329,25 +329,29 @@ typedef NS_ENUM(NSInteger, TWChannelTab) {
     [self layoutHeader];
     NSString *login = self.login;
     NSString *period = self.clipPeriod;
+    // (each case in braces: a block literal is a declaration the compiler will not let a later case jump over)
     switch (tab) {
-        case TWChannelTabClips:
+        case TWChannelTabClips: {
             self.emptyText = L(@"No clips in this period.");
             self.loader = ^TWHTTPTask *(NSString *cursor, TWListCompletion completion) {
                 return [TWGQL clipsForChannel:login period:period after:cursor completion:completion];
             };
             break;
-        case TWChannelTabHighlights:
+        }
+        case TWChannelTabHighlights: {
             self.emptyText = L(@"No highlights.");
             self.loader = ^TWHTTPTask *(NSString *cursor, TWListCompletion completion) {
                 return [TWGQL videosForChannel:login type:TWVideoTypeHighlight after:cursor completion:completion];
             };
             break;
-        default:
+        }
+        default: {
             self.emptyText = L(@"No past broadcasts. The channel may keep none.");
             self.loader = ^TWHTTPTask *(NSString *cursor, TWListCompletion completion) {
                 return [TWGQL videosForChannel:login type:TWVideoTypeArchive after:cursor completion:completion];
             };
             break;
+        }
     }
     [self reload];
 }

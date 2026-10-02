@@ -154,7 +154,8 @@ jobs:
           set -o pipefail
           export PATH="$THEOS/toolchain/linux/iphone/bin:$THEOS/bin:$PATH"
           make clean || true
-          make package FINALPACKAGE=1 -j"$(nproc)" 2>&1 | tee build.log
+          # (-k: every file is compiled even after one fails, so one run shows every compile error)
+          make package FINALPACKAGE=1 -j"$(nproc)" -k 2>&1 | tee build.log
           echo "== staged app =="
           ls -la .theos/_/Applications/Twitcher.app
 

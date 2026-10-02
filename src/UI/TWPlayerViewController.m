@@ -357,8 +357,9 @@ static const NSTimeInterval TWLivePauseReloadAfter = 40;   // paused this long: 
     self.playerView.controlsLocked = NO;
     [self.playerView setBuffering:YES];
     __weak TWPlayerViewController *weakSelf = self;
+    // (each case in braces: a block literal is a declaration the compiler will not let a later case jump over)
     switch (self.mode) {
-        case TWPlayerModeLive:
+        case TWPlayerModeLive: {
             self.loadTask = [TWPlayback variantsForChannel:self.login completion:^(NSArray *variants, NSError *error) {
                 TWPlayerViewController *s = weakSelf;
                 if (!s) return;
@@ -368,7 +369,8 @@ static const NSTimeInterval TWLivePauseReloadAfter = 40;   // paused this long: 
                 [s playVariants];
             }];
             break;
-        case TWPlayerModeVideo:
+        }
+        case TWPlayerModeVideo: {
             self.loadTask = [TWPlayback variantsForVideo:self.video.videoId completion:^(NSArray *variants, NSError *error) {
                 TWPlayerViewController *s = weakSelf;
                 if (!s) return;
@@ -382,7 +384,8 @@ static const NSTimeInterval TWLivePauseReloadAfter = 40;   // paused this long: 
                 [s playVariants];
             }];
             break;
-        case TWPlayerModeClip:
+        }
+        case TWPlayerModeClip: {
             self.loadTask = [TWGQL clipSources:self.clip.slug completion:^(NSArray *sources, NSError *error) {
                 TWPlayerViewController *s = weakSelf;
                 if (!s) return;
@@ -392,6 +395,7 @@ static const NSTimeInterval TWLivePauseReloadAfter = 40;   // paused this long: 
                 [s playClip];
             }];
             break;
+        }
     }
 }
 
