@@ -96,7 +96,7 @@
     [self.codeCopyButton setTitleColor:[t primaryTextColor] forState:UIControlStateNormal];
     [self.codeCopyButton setBackgroundImage:[t buttonImageHighlighted:NO] forState:UIControlStateNormal];
     [self.codeCopyButton setBackgroundImage:[t buttonImageHighlighted:YES] forState:UIControlStateHighlighted];
-    [self.codeCopyButton addTarget:self action:@selector(copyTapped) forControlEvents:UIControlEventTouchUpInside];
+    [self.codeCopyButton addTarget:self action:@selector(codeCopyTapped) forControlEvents:UIControlEventTouchUpInside];
     self.codeCopyButton.hidden = YES;
     [self.view addSubview:self.codeCopyButton];
 
@@ -193,7 +193,7 @@
     [self dismissViewControllerAnimated:YES completion:nil];
 }
 
-- (void)copyTapped
+- (void)codeCopyTapped
 {
     if (!self.userCode.length) return;
     [UIPasteboard generalPasteboard].string = self.userCode;
