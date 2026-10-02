@@ -1,0 +1,299 @@
+#import "TWUtils.h"
+#import "TWCommon.h"
+#include <CommonCrypto/CommonDigest.h>
+#include <sys/types.h>
+#include <sys/sysctl.h>
+#include <math.h>
+
+@implementation TWUtils
+
+#pragma mark - Formatting
+
++ (NSString *)formatCount:(NSInteger)count
+{
+    if (count >= 1000000) {
+        double m = count / 1000000.0;
+        if (m >= 10) return [NSString stringWithFormat:@"%.0fM", m];
+        return [NSString stringWithFormat:@"%.1fM", m];
+    }
+    if (count >= 1000) {
+        double k = count / 1000.0;
+        if (k >= 100) return [NSString stringWithFormat:@"%.0fK", k];
+        return [NSString stringWithFormat:@"%.1fK", k];
+    }
+    return [NSString stringWithFormat:@"%ld", (long)MAX(count, (NSInteger)0)];
+}
+
++ (NSString *)formatViewers:(NSInteger)count
+{
+    return [NSString stringWithFormat:L(@"%@ viewers"), [self formatCount:count]];
+}
+
++ (NSString *)formatDuration:(NSTimeInterval)seconds
+{
+    if (!(seconds > 0) || isinf(seconds)) seconds = 0;
+    long total = (long)floor(seconds + 0.5);
+    long h = total / 3600, m = (total % 3600) / 60, s = total % 60;
+    if (h > 0) return [NSString stringWithFormat:@"%ld:%02ld:%02ld", h, m, s];
+    return [NSString stringWithFormat:@"%ld:%02ld", m, s];
+}
+
++ (NSString *)formatUptimeSince:(NSDate *)date
+{
+    if (!date) return @"";
+    NSTimeInterval dt = -[date timeIntervalSinceNow];
+    if (dt < 0) dt = 0;
+    long minutes = (long)(dt / 60);
+    if (minutes < 60) return [NSString stringWithFormat:L(@"%ld min"), MAX(minutes, 1L)];
+    return [NSString stringWithFormat:@"%ld:%02ld", minutes / 60, minutes % 60];
+}
+
++ (NSString *)formatRelativeDate:(NSDate *)date
+{
+    if (!date) return @"";
+    NSTimeInterval dt = -[date timeIntervalSinceNow];
+    if (dt < 90) return L(@"just now");
+    if (dt < 3600) return [NSString stringWithFormat:L(@"%ld min ago"), (long)(dt / 60)];
+    if (dt < 86400) return [NSString stringWithFormat:L(@"%ld h ago"), (long)(dt / 3600)];
+    if (dt < 86400 * 2) return L(@"yesterday");
+    if (dt < 86400 * 30) return [NSString stringWithFormat:L(@"%ld days ago"), (long)(dt / 86400)];
+    static NSDateFormatter *formatter;
+    static dispatch_once_t once;
+    dispatch_once(&once, ^{
+        formatter = [[NSDateFormatter alloc] init];
+        formatter.dateStyle = NSDateFormatterMediumStyle;
+        formatter.timeStyle = NSDateFormatterNoStyle;
+    });
+    return [formatter stringFromDate:date];
+}
+
++ (NSString *)formatFileSize:(unsigned long long)bytes
+{
+    if (bytes < 1024) return [NSString stringWithFormat:@"%llu B", bytes];
+    if (bytes < 1024 * 1024) return [NSString stringWithFormat:@"%.0f KB", bytes / 1024.0];
+    if (bytes < 1024ULL * 1024 * 1024) return [NSString stringWithFormat:@"%.1f MB", bytes / (1024.0 * 1024.0)];
+    return [NSString stringWithFormat:@"%.2f GB", bytes / (1024.0 * 1024.0 * 1024.0)];
+}
+
++ (NSString *)truncate:(NSString *)string to:(NSUInteger)length
+{
+    if (!string) return @"";
+    NSString *s = [string stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
+    s = [s stringByReplacingOccurrencesOfString:@"\n" withString:@" "];
+    if (s.length <= length) return s;
+    NSRange r = [s rangeOfComposedCharacterSequencesForRange:NSMakeRange(0, length)];
+    return [[s substringWithRange:r] stringByAppendingString:@"…"];
+}
+
+#pragma mark - Encoding
+
++ (NSString *)urlEncode:(NSString *)string
+{
+    if (!string.length) return @"";
+    NSData *utf8 = [string dataUsingEncoding:NSUTF8StringEncoding];
+    const uint8_t *bytes = utf8.bytes;
+    NSMutableString *out = [NSMutableString stringWithCapacity:utf8.length * 3];
+    for (NSUInteger i = 0; i < utf8.length; i++) {
+        uint8_t c = bytes[i];
+        if ((c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || (c >= '0' && c <= '9') || c == '-' || c == '_' || c == '.' || c == '~') {
+            [out appendFormat:@"%c", (char)c];
+        } else {
+            [out appendFormat:@"%%%02X", c];
+        }
+    }
+    return out;
+}
+
++ (NSString *)sha1:(NSString *)string
+{
+    NSData *d = [string ?: @"" dataUsingEncoding:NSUTF8StringEncoding];
+    unsigned char digest[CC_SHA1_DIGEST_LENGTH];
+    CC_SHA1(d.bytes, (CC_LONG)d.length, digest);
+    NSMutableString *s = [NSMutableString stringWithCapacity:CC_SHA1_DIGEST_LENGTH * 2];
+    for (int i = 0; i < CC_SHA1_DIGEST_LENGTH; i++) [s appendFormat:@"%02x", digest[i]];
+    return s;
+}
+
++ (NSString *)base64Encode:(NSData *)data
+{
+    static const char table[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+    const uint8_t *bytes = data.bytes;
+    NSUInteger length = data.length;
+    NSMutableString *out = [NSMutableString stringWithCapacity:(length + 2) / 3 * 4];
+    for (NSUInteger i = 0; i < length; i += 3) {
+        uint32_t v = (uint32_t)bytes[i] << 16;
+        if (i + 1 < length) v |= (uint32_t)bytes[i + 1] << 8;
+        if (i + 2 < length) v |= bytes[i + 2];
+        [out appendFormat:@"%c%c", table[(v >> 18) & 63], table[(v >> 12) & 63]];
+        [out appendFormat:@"%c", i + 1 < length ? table[(v >> 6) & 63] : '='];
+        [out appendFormat:@"%c", i + 2 < length ? table[v & 63] : '='];
+    }
+    return out;
+}
+
++ (id)JSONObjectFromData:(NSData *)data
+{
+    if (!data.length) return nil;
+    NSError *error = nil;
+    id object = [NSJSONSerialization JSONObjectWithData:data options:0 error:&error];
+    return error ? nil : object;
+}
+
++ (NSData *)JSONDataFromObject:(id)object
+{
+    if (!object) return nil;
+    NSError *error = nil;
+    NSData *data = [NSJSONSerialization dataWithJSONObject:object options:0 error:&error];
+    if (error) {
+        TWLog(@"JSON serialization failed: %@", error);
+        return nil;
+    }
+    return data;
+}
+
++ (NSDictionary *)parseQuery:(NSString *)query
+{
+    NSMutableDictionary *result = [NSMutableDictionary dictionary];
+    for (NSString *pair in [query componentsSeparatedByString:@"&"]) {
+        if (!pair.length) continue;
+        NSRange eq = [pair rangeOfString:@"="];
+        NSString *name = eq.location == NSNotFound ? pair : [pair substringToIndex:eq.location];
+        NSString *value = eq.location == NSNotFound ? @"" : [pair substringFromIndex:eq.location + 1];
+        value = [value stringByReplacingOccurrencesOfString:@"+" withString:@" "];
+        result[name] = [value stringByReplacingPercentEscapesUsingEncoding:NSUTF8StringEncoding] ?: value;
+    }
+    return result;
+}
+
+#pragma mark - Device
+
++ (NSString *)deviceModel
+{
+    static NSString *model;
+    static dispatch_once_t once;
+    dispatch_once(&once, ^{
+        char buffer[64];
+        size_t size = sizeof(buffer);
+        memset(buffer, 0, sizeof(buffer));
+        if (sysctlbyname("hw.machine", buffer, &size, NULL, 0) == 0 && buffer[0]) model = [NSString stringWithUTF8String:buffer];
+        if (!model) model = [UIDevice currentDevice].model ?: @"?";
+    });
+    return model;
+}
+
++ (BOOL)deviceIsOldGeneration
+{
+    static BOOL old;
+    static dispatch_once_t once;
+    dispatch_once(&once, ^{
+        // Everything iOS 6 runs on that has an A4 or older chip: iPhone 3GS (iPhone2,1), iPhone 4 (iPhone3,x),
+        // iPod touch 4 (iPod4,1). The iPad 2, iPhone 4S, iPod touch 5 and newer have an A5 or better.
+        NSString *m = [self deviceModel];
+        old = [m hasPrefix:@"iPhone1,"] || [m hasPrefix:@"iPhone2,"] || [m hasPrefix:@"iPhone3,"] ||
+              [m hasPrefix:@"iPod1,"] || [m hasPrefix:@"iPod2,"] || [m hasPrefix:@"iPod3,"] || [m hasPrefix:@"iPod4,"] ||
+              [m hasPrefix:@"iPad1,"];
+    });
+    return old;
+}
+
++ (NSUInteger)physicalMemoryMB
+{
+    return (NSUInteger)([NSProcessInfo processInfo].physicalMemory / (1024ULL * 1024ULL));
+}
+
++ (CGFloat)screenScale
+{
+    static CGFloat scale;
+    static dispatch_once_t once;
+    dispatch_once(&once, ^{ scale = [UIScreen mainScreen].scale; });
+    return scale;
+}
+
+#pragma mark - App
+
++ (NSString *)appVersion
+{
+    NSDictionary *info = [[NSBundle mainBundle] infoDictionary];
+    return [NSString stringWithFormat:@"%@ (%@)", info[@"CFBundleShortVersionString"] ?: @"0", info[@"CFBundleVersion"] ?: @"0"];
+}
+
++ (NSString *)ensureDirectory:(NSString *)path
+{
+    NSFileManager *fm = [NSFileManager defaultManager];
+    BOOL isDir = NO;
+    if (![fm fileExistsAtPath:path isDirectory:&isDir] || !isDir) {
+        [fm createDirectoryAtPath:path withIntermediateDirectories:YES attributes:nil error:NULL];
+    }
+    return path;
+}
+
++ (NSString *)cachesPath
+{
+    NSArray *paths = NSSearchPathForDirectoriesInDomains(NSCachesDirectory, NSUserDomainMask, YES);
+    return [self ensureDirectory:paths[0]];
+}
+
++ (NSString *)documentsPath
+{
+    NSArray *paths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES);
+    return [self ensureDirectory:paths[0]];
+}
+
++ (void)alertWithTitle:(NSString *)title message:(NSString *)message
+{
+    TWMain(^{
+        UIAlertView *alert = [[UIAlertView alloc] initWithTitle:title message:message delegate:nil cancelButtonTitle:L(@"OK") otherButtonTitles:nil];
+        [alert show];
+    });
+}
+
+#pragma mark - Colors
+
++ (UIColor *)colorFromHex:(NSString *)hex
+{
+    if (![hex isKindOfClass:[NSString class]]) return nil;
+    NSString *s = [hex hasPrefix:@"#"] ? [hex substringFromIndex:1] : hex;
+    if (s.length != 6) return nil;
+    unsigned int value = 0;
+    NSScanner *scanner = [NSScanner scannerWithString:s];
+    if (![scanner scanHexInt:&value] || !scanner.isAtEnd) return nil;
+    return [UIColor colorWithRed:((value >> 16) & 0xFF) / 255.0 green:((value >> 8) & 0xFF) / 255.0 blue:(value & 0xFF) / 255.0 alpha:1.0];
+}
+
++ (UIColor *)readableColor:(UIColor *)color onDark:(BOOL)dark
+{
+    CGFloat r = 0, g = 0, b = 0, a = 1;
+    if (![color getRed:&r green:&g blue:&b alpha:&a]) {
+        CGFloat w = 0;
+        if (![color getWhite:&w alpha:&a]) return color;
+        r = g = b = w;
+    }
+    // perceived brightness (ITU-R BT.601)
+    CGFloat luma = 0.299 * r + 0.587 * g + 0.114 * b;
+    if (dark && luma < 0.42) {
+        // lighten towards white until readable on a dark background
+        CGFloat t = (0.42 - luma) / (1.0 - luma);
+        r += (1 - r) * t; g += (1 - g) * t; b += (1 - b) * t;
+    } else if (!dark && luma > 0.62) {
+        // darken towards black until readable on a light background
+        CGFloat t = 0.62 / luma;
+        r *= t; g *= t; b *= t;
+    } else {
+        return color;
+    }
+    return [UIColor colorWithRed:r green:g blue:b alpha:1.0];
+}
+
+#pragma mark - Images
+
++ (UIImage *)imageWithColor:(UIColor *)color size:(CGSize)size
+{
+    UIGraphicsBeginImageContextWithOptions(size, NO, 0);
+    [color setFill];
+    UIRectFill(CGRectMake(0, 0, size.width, size.height));
+    UIImage *image = UIGraphicsGetImageFromCurrentImageContext();
+    UIGraphicsEndImageContext();
+    return image;
+}
+
+@end
