@@ -12,7 +12,7 @@
 @property (nonatomic, strong) UILabel *addressLabel;
 @property (nonatomic, strong) UILabel *statusLabel;
 @property (nonatomic, strong) UIActivityIndicatorView *spinner;
-@property (nonatomic, strong) UIButton *copyButton;
+@property (nonatomic, strong) UIButton *codeCopyButton;
 @property (nonatomic, strong) UIButton *browserButton;
 @property (nonatomic, copy) NSString *userCode;
 @property (nonatomic, copy) NSString *verificationURL;
@@ -90,15 +90,15 @@
     [self.spinner startAnimating];
     [self.view addSubview:self.spinner];
 
-    self.copyButton = [UIButton buttonWithType:UIButtonTypeCustom];
-    self.copyButton.titleLabel.font = [UIFont boldSystemFontOfSize:14];
-    [self.copyButton setTitle:L(@"Copy Code") forState:UIControlStateNormal];
-    [self.copyButton setTitleColor:[t primaryTextColor] forState:UIControlStateNormal];
-    [self.copyButton setBackgroundImage:[t buttonImageHighlighted:NO] forState:UIControlStateNormal];
-    [self.copyButton setBackgroundImage:[t buttonImageHighlighted:YES] forState:UIControlStateHighlighted];
-    [self.copyButton addTarget:self action:@selector(copyTapped) forControlEvents:UIControlEventTouchUpInside];
-    self.copyButton.hidden = YES;
-    [self.view addSubview:self.copyButton];
+    self.codeCopyButton = [UIButton buttonWithType:UIButtonTypeCustom];
+    self.codeCopyButton.titleLabel.font = [UIFont boldSystemFontOfSize:14];
+    [self.codeCopyButton setTitle:L(@"Copy Code") forState:UIControlStateNormal];
+    [self.codeCopyButton setTitleColor:[t primaryTextColor] forState:UIControlStateNormal];
+    [self.codeCopyButton setBackgroundImage:[t buttonImageHighlighted:NO] forState:UIControlStateNormal];
+    [self.codeCopyButton setBackgroundImage:[t buttonImageHighlighted:YES] forState:UIControlStateHighlighted];
+    [self.codeCopyButton addTarget:self action:@selector(copyTapped) forControlEvents:UIControlEventTouchUpInside];
+    self.codeCopyButton.hidden = YES;
+    [self.view addSubview:self.codeCopyButton];
 
     // the user's own browser app (Surfari) opens pages this device's Safari cannot
     BOOL hasBrowser = [[UIApplication sharedApplication] canOpenURL:[NSURL URLWithString:@"browser:home"]];
@@ -128,7 +128,7 @@
     y += 34;
     self.codeLabel.frame = CGRectMake(x, y, w, 50);
     y += 62;
-    self.copyButton.frame = CGRectMake(floor((b.size.width - 250) / 2), y, 120, 34);
+    self.codeCopyButton.frame = CGRectMake(floor((b.size.width - 250) / 2), y, 120, 34);
     self.browserButton.frame = CGRectMake(floor((b.size.width - 250) / 2) + 130, y, 120, 34);
     y += 50;
     self.spinner.center = CGPointMake(b.size.width / 2, y + 10);
@@ -150,7 +150,7 @@
         s.userCode = userCode;
         s.verificationURL = verificationURL;
         s.codeLabel.text = userCode;
-        s.copyButton.hidden = NO;
+        s.codeCopyButton.hidden = NO;
         s.browserButton.hidden = NO;
         s.statusLabel.text = L(@"Waiting for the confirmation on twitch.tv… this screen finishes by itself.");
     } completion:^(NSError *error) {
@@ -160,7 +160,7 @@
         [s.spinner stopAnimating];
         if (error) {
             s.statusLabel.text = error.localizedDescription;
-            s.copyButton.hidden = YES;
+            s.codeCopyButton.hidden = YES;
             s.browserButton.hidden = YES;
             UIAlertView *alert = [[UIAlertView alloc] initWithTitle:L(@"Login failed") message:error.localizedDescription delegate:s
                                                   cancelButtonTitle:L(@"Close") otherButtonTitles:L(@"Try Again"), nil];

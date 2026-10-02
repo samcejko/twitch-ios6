@@ -133,7 +133,7 @@ static const CGFloat TWChatInputHeight = 44;
 @property (nonatomic, strong) UITableView *tableView;
 @property (nonatomic, strong) NSMutableArray *messages;
 @property (nonatomic, strong) TWChatStyle *style;
-@property (nonatomic, strong) UIButton *newMessagesButton;
+@property (nonatomic, strong) UIButton *moreMessagesButton;
 @property (nonatomic) BOOL stuckToBottom;
 @property (nonatomic) NSUInteger unseen;
 // input
@@ -176,12 +176,12 @@ static const CGFloat TWChatInputHeight = 44;
         press.minimumPressDuration = 0.5;
         [_tableView addGestureRecognizer:press];
 
-        _newMessagesButton = [UIButton buttonWithType:UIButtonTypeCustom];
-        _newMessagesButton.titleLabel.font = [UIFont boldSystemFontOfSize:12];
-        [_newMessagesButton setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
-        [_newMessagesButton addTarget:self action:@selector(newMessagesTapped) forControlEvents:UIControlEventTouchUpInside];
-        _newMessagesButton.hidden = YES;
-        [self addSubview:_newMessagesButton];
+        _moreMessagesButton = [UIButton buttonWithType:UIButtonTypeCustom];
+        _moreMessagesButton.titleLabel.font = [UIFont boldSystemFontOfSize:12];
+        [_moreMessagesButton setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
+        [_moreMessagesButton addTarget:self action:@selector(moreMessagesTapped) forControlEvents:UIControlEventTouchUpInside];
+        _moreMessagesButton.hidden = YES;
+        [self addSubview:_moreMessagesButton];
 
         _inputBackground = [[UIImageView alloc] initWithFrame:CGRectZero];
         _inputBackground.hidden = YES;
@@ -245,7 +245,7 @@ static const CGFloat TWChatInputHeight = 44;
     [self.sendButton setBackgroundImage:[t accentButtonImageHighlighted:NO disabled:NO] forState:UIControlStateNormal];
     [self.sendButton setBackgroundImage:[t accentButtonImageHighlighted:YES disabled:NO] forState:UIControlStateHighlighted];
     [self.sendButton setBackgroundImage:[t accentButtonImageHighlighted:NO disabled:YES] forState:UIControlStateDisabled];
-    [self.newMessagesButton setBackgroundImage:[t pillImageWithColor:[t accentColor]] forState:UIControlStateNormal];
+    [self.moreMessagesButton setBackgroundImage:[t pillImageWithColor:[t accentColor]] forState:UIControlStateNormal];
     [self.picker applyTheme];
     [self invalidateLayouts];
 }
@@ -326,8 +326,8 @@ static const CGFloat TWChatInputHeight = 44;
     CGFloat fieldX = 38;
     self.fieldBackground.frame = CGRectMake(fieldX, y + 7, b.size.width - fieldX - sendW - 12, 30);
     self.field.frame = CGRectInset(self.fieldBackground.frame, 8, 0);
-    CGSize pill = [self.newMessagesButton.currentTitle sizeWithFont:self.newMessagesButton.titleLabel.font];
-    self.newMessagesButton.frame = CGRectMake(floor((b.size.width - pill.width - 24) / 2), CGRectGetMaxY(tableFrame) - 32, pill.width + 24, 24);
+    CGSize pill = [self.moreMessagesButton.currentTitle sizeWithFont:self.moreMessagesButton.titleLabel.font];
+    self.moreMessagesButton.frame = CGRectMake(floor((b.size.width - pill.width - 24) / 2), CGRectGetMaxY(tableFrame) - 32, pill.width + 24, 24);
 }
 
 #pragma mark - Messages
@@ -402,15 +402,15 @@ static const CGFloat TWChatInputHeight = 44;
 - (void)updateNewMessagesButton
 {
     if (self.stuckToBottom || !self.unseen) {
-        self.newMessagesButton.hidden = YES;
+        self.moreMessagesButton.hidden = YES;
         return;
     }
-    [self.newMessagesButton setTitle:[NSString stringWithFormat:L(@"%lu new messages ↓"), (unsigned long)self.unseen] forState:UIControlStateNormal];
-    self.newMessagesButton.hidden = NO;
+    [self.moreMessagesButton setTitle:[NSString stringWithFormat:L(@"%lu new messages ↓"), (unsigned long)self.unseen] forState:UIControlStateNormal];
+    self.moreMessagesButton.hidden = NO;
     [self setNeedsLayout];
 }
 
-- (void)newMessagesTapped
+- (void)moreMessagesTapped
 {
     [self scrollToBottom];
 }
