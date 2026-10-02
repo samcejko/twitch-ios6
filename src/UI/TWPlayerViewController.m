@@ -254,7 +254,7 @@ static const NSTimeInterval TWLivePauseReloadAfter = 40;   // paused this long: 
     return YES;
 }
 
-- (NSUInteger)supportedInterfaceOrientations
+- (UIInterfaceOrientationMask)supportedInterfaceOrientations
 {
     return TWIsPad() ? UIInterfaceOrientationMaskAll : UIInterfaceOrientationMaskAllButUpsideDown;
 }
