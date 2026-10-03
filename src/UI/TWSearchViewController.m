@@ -134,6 +134,14 @@ typedef NS_ENUM(NSInteger, TWSearchSection) {
     [searchBar resignFirstResponder];
 }
 
+- (void)searchFor:(NSString *)text
+{
+    [self view];   // (loads the view, and the search bar with it)
+    self.searchBar.text = text;
+    [self.searchBar resignFirstResponder];
+    [self searchNow];
+}
+
 - (void)searchNow
 {
     NSString *text = [self.searchBar.text stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];

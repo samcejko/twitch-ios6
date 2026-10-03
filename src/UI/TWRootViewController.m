@@ -180,6 +180,15 @@
     }
 }
 
+- (void)searchFor:(NSString *)text
+{
+    [self.presentedViewController dismissViewControllerAnimated:NO completion:nil];
+    self.selectedViewController = self.searchNav;
+    [self.searchNav popToRootViewControllerAnimated:NO];
+    TWSearchViewController *search = (TWSearchViewController *)self.searchNav.viewControllers[0];
+    [search searchFor:text];
+}
+
 #pragma mark - Rotation
 
 - (BOOL)shouldAutorotate

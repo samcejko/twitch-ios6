@@ -23,6 +23,72 @@ static BOOL TWButtonMatches(UIButton *button, NSString *text)
     return NO;
 }
 
+// Is the text in a label of this view? (Controls' own labels excepted: a segment title is not its table row's text.)
+static BOOL TWViewContainsText(UIView *view, NSString *text)
+{
+    if ([view isKindOfClass:[UILabel class]]) {
+        NSString *s = ((UILabel *)view).text;
+        return s.length && [s rangeOfString:text options:NSCaseInsensitiveSearch].location != NSNotFound;
+    }
+    for (UIView *sub in view.subviews) {
+        if ([sub isKindOfClass:[UIControl class]]) continue;
+        if (TWViewContainsText(sub, text)) return YES;
+    }
+    return NO;
+}
+
+// Acts on a view "named" text the way a finger would: a button is pressed, a segment selected, the switch of a table
+// row flipped, a table or grid row selected. YES when this view was the one.
+static BOOL TWPressView(UIView *v, NSString *text)
+{
+    if ([v isKindOfClass:[UIButton class]]) {
+        if (!TWButtonMatches((UIButton *)v, text)) return NO;
+        [(UIButton *)v sendActionsForControlEvents:UIControlEventTouchUpInside];
+        return YES;
+    }
+    if ([v isKindOfClass:[UISegmentedControl class]]) {
+        UISegmentedControl *segments = (UISegmentedControl *)v;
+        for (NSUInteger i = 0; i < segments.numberOfSegments; i++) {
+            NSString *title = [segments titleForSegmentAtIndex:i];
+            if (title.length && [title rangeOfString:text options:NSCaseInsensitiveSearch].location != NSNotFound) {
+                segments.selectedSegmentIndex = (NSInteger)i;
+                [segments sendActionsForControlEvents:UIControlEventValueChanged];
+                return YES;
+            }
+        }
+        return NO;
+    }
+    if ([v isKindOfClass:[UITableViewCell class]]) {
+        UITableViewCell *cell = (UITableViewCell *)v;
+        if (!TWViewContainsText(cell, text)) return NO;
+        if ([cell.accessoryView isKindOfClass:[UISwitch class]]) {
+            UISwitch *sw = (UISwitch *)cell.accessoryView;
+            [sw setOn:!sw.on animated:NO];
+            [sw sendActionsForControlEvents:UIControlEventValueChanged];
+            return YES;
+        }
+        UIView *table = cell.superview;
+        while (table && ![table isKindOfClass:[UITableView class]]) table = table.superview;
+        NSIndexPath *ip = [(UITableView *)table indexPathForCell:cell];
+        id<UITableViewDelegate> delegate = [(UITableView *)table delegate];
+        if (!ip || ![delegate respondsToSelector:@selector(tableView:didSelectRowAtIndexPath:)]) return NO;
+        [delegate tableView:(UITableView *)table didSelectRowAtIndexPath:ip];
+        return YES;
+    }
+    if ([v isKindOfClass:[UICollectionViewCell class]]) {
+        UICollectionViewCell *cell = (UICollectionViewCell *)v;
+        if (!TWViewContainsText(cell, text)) return NO;
+        UIView *grid = cell.superview;
+        while (grid && ![grid isKindOfClass:[UICollectionView class]]) grid = grid.superview;
+        NSIndexPath *ip = [(UICollectionView *)grid indexPathForCell:cell];
+        id<UICollectionViewDelegate> delegate = [(UICollectionView *)grid delegate];
+        if (!ip || ![delegate respondsToSelector:@selector(collectionView:didSelectItemAtIndexPath:)]) return NO;
+        [delegate collectionView:(UICollectionView *)grid didSelectItemAtIndexPath:ip];
+        return YES;
+    }
+    return NO;
+}
+
 @implementation TWAppDelegate
 
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions
@@ -46,10 +112,11 @@ static BOOL TWButtonMatches(UIButton *button, NSString *text)
 }
 
 // twitcher:channel/<login> opens the channel page, twitcher:watch/<login> the player, twitcher:video/<id> a past
-// broadcast and twitcher:clip/<slug> a clip. Over SSH (uiopen) a few commands help checking the app: twitcher:snapshot
-// and twitcher:screen write tmp/screen.png, twitcher:press?n=1 presses a button of the alert on screen, press?title=Chat
-// a button with that title or label, twitcher:tab?n=1 switches the tab and twitcher:stats logs the memory in use.
-// The commands need a file named "debug" in the app's Documents folder.
+// broadcast, twitcher:clip/<slug> a clip and twitcher:search?q=<text> the search. Over SSH (uiopen) a few commands help
+// checking the app: twitcher:snapshot and twitcher:screen write tmp/screen.png, twitcher:press?n=1 presses a button of
+// the alert on screen, press?title=Chat a button, segment, switch row or list row with that text, twitcher:tab?n=1
+// switches the tab and twitcher:stats logs the memory in use. The commands need a file named "debug" in the app's
+// Documents folder.
 - (BOOL)application:(UIApplication *)application openURL:(NSURL *)url sourceApplication:(NSString *)sourceApplication annotation:(id)annotation
 {
     NSString *s = url.absoluteString ?: @"";
@@ -72,6 +139,10 @@ static BOOL TWButtonMatches(UIButton *button, NSString *text)
     }
     if ([target isEqualToString:@"open"] && [params[@"channel"] length]) {
         [self.rootViewController openChannelLogin:[params[@"channel"] lowercaseString] watch:[params[@"watch"] boolValue]];
+        return YES;
+    }
+    if ([target isEqualToString:@"search"] && [params[@"q"] length]) {
+        [self.rootViewController searchFor:params[@"q"]];
         return YES;
     }
     if ([target hasPrefix:@"video/"]) {
@@ -164,8 +235,7 @@ static BOOL TWButtonMatches(UIButton *button, NSString *text)
                 if ([sheet.delegate respondsToSelector:@selector(actionSheet:clickedButtonAtIndex:)]) [sheet.delegate actionSheet:sheet clickedButtonAtIndex:n];
                 [sheet dismissWithClickedButtonIndex:n animated:NO];
                 pressed = YES;
-            } else if (byTitle.length && [v isKindOfClass:[UIButton class]] && !v.hidden && TWButtonMatches((UIButton *)v, byTitle)) {
-                [(UIButton *)v sendActionsForControlEvents:UIControlEventTouchUpInside];
+            } else if (byTitle.length && !v.hidden && TWPressView(v, byTitle)) {
                 pressed = YES;
             } else {
                 [views addObjectsFromArray:v.subviews];
