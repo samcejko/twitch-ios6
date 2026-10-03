@@ -200,6 +200,7 @@ static const CGFloat TWChatInputHeight = 44;
         [self addSubview:_field];
         _emoteButton = [UIButton buttonWithType:UIButtonTypeCustom];
         [_emoteButton addTarget:self action:@selector(emoteTapped) forControlEvents:UIControlEventTouchUpInside];
+        _emoteButton.accessibilityLabel = L(@"Emotes");
         _emoteButton.showsTouchWhenHighlighted = YES;
         _emoteButton.hidden = YES;
         [self addSubview:_emoteButton];
@@ -569,6 +570,13 @@ static const CGFloat TWChatInputHeight = 44;
     NSString *text = [self.field.text stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
     if (!text.length || self.sending) return;
     if ([self.delegate respondsToSelector:@selector(chatView:wantsToSend:)]) [self.delegate chatView:self wantsToSend:text];
+}
+
+- (void)enterText:(NSString *)text send:(BOOL)send
+{
+    if (!self.canSend || self.replayMode) return;
+    self.field.text = text ?: @"";
+    if (send) [self sendTapped];
 }
 
 - (BOOL)textFieldShouldReturn:(UITextField *)textField

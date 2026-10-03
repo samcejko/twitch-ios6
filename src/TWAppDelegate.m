@@ -1,5 +1,6 @@
 #import "TWAppDelegate.h"
 #import "TWRootViewController.h"
+#import "TWPlayerViewController.h"
 #import "TWNavigator.h"
 #import "TWTLSSocket.h"
 #import "TWMediaProxy.h"
@@ -247,6 +248,25 @@ static BOOL TWPressView(UIView *v, NSString *text)
     if ([target isEqualToString:@"tab"]) {
         NSInteger n = [params[@"n"] integerValue];
         if (n >= 0 && n < 5) self.rootViewController.selectedIndex = (NSUInteger)n;
+        return YES;
+    }
+    if ([target isEqualToString:@"chat"]) {
+        // twitcher:chat?text=<message>&send=1 types into the open player's chat (and sends it) the way a finger would
+        UIViewController *top = [TWNavigator presenterFrom:nil];
+        if ([top isKindOfClass:[TWPlayerViewController class]]) {
+            [(TWPlayerViewController *)top enterChatText:params[@"text"] send:[params[@"send"] boolValue]];
+            TWLog(@"Chat text entered (%@)", [params[@"send"] boolValue] ? @"sent" : @"typed");
+        } else {
+            TWLog(@"Chat text: no player open");
+        }
+        return YES;
+    }
+    if ([target isEqualToString:@"refresh"]) {
+        TWAuth *auth = [TWAuth shared];
+        TWLog(@"Token: logged in %d, expires %@", auth.isLoggedIn, auth.expiresAt);
+        [auth refreshTokenWithCompletion:^(BOOL refreshed) {
+            TWLog(@"Token refresh: %@, now expires %@", refreshed ? @"a new token arrived" : @"nothing changed", [TWAuth shared].expiresAt);
+        }];
         return YES;
     }
     if ([target isEqualToString:@"back"]) {

@@ -225,7 +225,8 @@
 "The streamer's own quality, when the device can decode it." = "Kvalita, v jaké streamer vysílá, pokud ji zařízení zvládne.";
 "Just the sound, for the background." = "Jen zvuk, na pozadí.";
 
-/* Player buttons (VoiceOver labels) */
+/* Player and chat buttons (VoiceOver labels) */
+"Emotes" = "Emotikony";
 "Play" = "Přehrát";
 "Pause" = "Pozastavit";
 "Back 10 seconds" = "Zpět o 10 sekund";

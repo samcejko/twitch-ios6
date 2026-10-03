@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.1.0 (unreleased)
+## 0.1.0 (2026-10-03)
 
 First version: live streams with chat, past broadcasts with the chat replay, clips, categories, search,
 favourites, optional Twitch login (followed channels, sending messages), quality choice, background sound,

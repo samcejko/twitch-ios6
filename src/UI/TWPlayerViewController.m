@@ -967,6 +967,11 @@ static const NSTimeInterval TWLivePauseReloadAfter = 40;   // paused this long: 
     else [app openURL:u];
 }
 
+- (void)enterChatText:(NSString *)text send:(BOOL)send
+{
+    [self.chatView enterText:text send:send];
+}
+
 - (void)chatView:(TWChatView *)chatView wantsToSend:(NSString *)text
 {
     if (!self.channelId.length) {

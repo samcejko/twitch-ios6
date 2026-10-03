@@ -11,4 +11,7 @@
 // Another player takes this screen's place (a channel opened from inside the player)
 - (void)replaceWithPlayer:(TWPlayerViewController *)player;
 
+// Types into the chat's input bar, optionally pressing Send (the debug URL command twitcher:chat?text=)
+- (void)enterChatText:(NSString *)text send:(BOOL)send;
+
 @end

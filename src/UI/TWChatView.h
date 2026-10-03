@@ -40,6 +40,7 @@
 - (void)insertMention:(NSString *)login;               // "@name " into the input
 - (void)setSending:(BOOL)sending;                      // disables the send button while a message is on its way
 - (void)clearInput;
+- (void)enterText:(NSString *)text send:(BOOL)send;    // types into the input bar as the user would (the debug URL command)
 - (void)dismissKeyboard;
 - (void)applyTheme;
 - (void)scrollToBottom;
