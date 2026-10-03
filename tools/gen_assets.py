@@ -1,16 +1,17 @@
 #!/usr/bin/env python3
-"""Generates the app icon and launch images for iOS 6 (run in CI, needs Pillow).
+"""Generates the app icon and launch images for iOS 6 (run in CI, needs Pillow and rsvg-convert).
 
-The icon: Twitch's "Glitch" (the speech bubble with two eyes, black body with a white face, as on twitch.tv) on a
-purple gradient tile with a soft shadow under it, the way icons looked in 2012. iOS 6 adds its own shine on top
-(UIPrerenderedIcon is false).
+The icon is tools/icon.svg: a glass speech bubble in the spirit of Twitch's "Glitch" on a purple aqua tile, with
+its own gloss (UIPrerenderedIcon is on, like Surfari's icon).
 
 Usage: python3 tools/gen_assets.py Resources
 """
 import os
+import subprocess
 import sys
+import tempfile
 
-from PIL import Image, ImageDraw, ImageFilter, ImageFont
+from PIL import Image, ImageDraw, ImageFont
 
 OUT = sys.argv[1] if len(sys.argv) > 1 else "Resources"
 APP_NAME = "Twitcher"
@@ -59,46 +60,25 @@ def text_size(draw, text, fnt):
 _BASE_ICON = None
 
 
-# The Glitch, in the 2400 x 2800 grid of Twitch's own drawing: the body (black, with the top-left corner cut and the
-# tail at the bottom), the face (white) and the two eyes
-GLITCH_BODY = [(500, 0), (0, 500), (0, 2300), (600, 2300), (600, 2800), (1100, 2300), (1500, 2300), (2400, 1400), (2400, 0)]
-GLITCH_FACE = [(600, 200), (2200, 200), (2200, 1300), (1800, 1700), (1400, 1700), (1050, 2050), (1050, 1700), (600, 1700)]
-GLITCH_EYES = [(1150, 550, 1350, 1150), (1700, 550, 1900, 1150)]
-GLITCH_DARK = (16, 10, 28, 255)
+ICON_SVG = os.path.join(os.path.dirname(os.path.abspath(__file__)), "icon.svg")
 
 
 def base_icon():
-    """The 1024 px master icon, drawn once."""
+    """The 1024 px master icon: tools/icon.svg rendered by rsvg-convert (librsvg2-bin), once."""
     global _BASE_ICON
     if _BASE_ICON is not None:
         return _BASE_ICON
     base = 1024
-    img = vertical_gradient((base, base), (166, 120, 255), (108, 58, 220)).convert("RGBA")
-    # a soft light from above, fading out by the middle (iOS 6 adds its own shine as well)
-    light = Image.new("L", (1, base))
-    light.putdata([int(60 * max(0.0, 1 - y / (base * 0.55))) for y in range(base)])
-    highlight = Image.new("RGBA", (base, base), (255, 255, 255, 0))
-    highlight.putalpha(light.resize((base, base), NEAREST))
-    img = Image.alpha_composite(img, highlight)
-
-    # the glyph takes 60 % of the height, a little above the middle (the tail hangs below the body)
-    scale = base * 0.60 / 2800
-    x0, y0 = (base - 2400 * scale) / 2, (base - 2800 * scale) / 2 - base * 0.02
-
-    def pts(points, dy=0):
-        return [(x0 + x * scale, y0 + (y + dy) * scale) for x, y in points]
-
-    # a soft shadow under the body gives the tile the depth icons had then
-    shadow = Image.new("RGBA", (base, base), (0, 0, 0, 0))
-    ImageDraw.Draw(shadow).polygon(pts(GLITCH_BODY, dy=70), fill=(40, 10, 90, 150))
-    img = Image.alpha_composite(img, shadow.filter(ImageFilter.GaussianBlur(14)))
-
-    d = ImageDraw.Draw(img)
-    d.polygon(pts(GLITCH_BODY), fill=GLITCH_DARK)
-    d.polygon(pts(GLITCH_FACE), fill=(255, 255, 255, 255))
-    for ex0, ey0, ex1, ey1 in GLITCH_EYES:
-        d.rectangle((x0 + ex0 * scale, y0 + ey0 * scale, x0 + ex1 * scale, y0 + ey1 * scale), fill=GLITCH_DARK)
-    _BASE_ICON = img.convert("RGB")
+    with tempfile.TemporaryDirectory() as tmp:
+        png = os.path.join(tmp, "icon.png")
+        try:
+            subprocess.run(["rsvg-convert", "-w", str(base), "-h", str(base), "-o", png, ICON_SVG], check=True)
+        except (OSError, subprocess.CalledProcessError) as e:
+            sys.exit("gen_assets: cannot render %s (install librsvg2-bin): %s" % (ICON_SVG, e))
+        img = Image.open(png).convert("RGBA")
+    # (full bleed: nothing should be transparent, but a white ground keeps any stray pixel from going black)
+    ground = Image.new("RGBA", img.size, (255, 255, 255, 255))
+    _BASE_ICON = Image.alpha_composite(ground, img).convert("RGB")
     return _BASE_ICON
 
 
