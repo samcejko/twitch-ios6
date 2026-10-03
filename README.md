@@ -55,10 +55,15 @@ Local helpers (Windows PowerShell, no git required; settings in `tools/local.jso
 . .\tools\ipad.ps1; Get-IPadCrashLogs; Get-IPadSyslog   # debugging
 ```
 
-Debugging over SSH: `uiopen twitcher:watch/<channel>` opens a stream, `uiopen twitcher:channel/<channel>` a channel
-page. With a file named `debug` in the app's Documents folder, `uiopen twitcher:snapshot` and `twitcher:screen` write
-the screen to the app's `tmp/screen.png`, `twitcher:press?n=0` presses a button of the alert on screen and
-`twitcher:tab?n=1` switches tabs. `/var/log/syslog` carries the app's log lines (`[Twitcher]`).
+URL scheme (other apps, or `uiopen` over SSH): `twitcher:watch/<channel>` opens a stream, `twitcher:channel/<channel>`
+a channel page, `twitcher:video/<id>` a past broadcast, `twitcher:clip/<slug>` a clip, `twitcher:search?q=<text>` a search.
+
+Debugging over SSH: with a file named `debug` in the app's Documents folder (`Enable-TwitcherDebug` in
+`tools/ipad.ps1`), `uiopen twitcher:snapshot` draws the app's windows and `twitcher:screen` grabs the real screen
+(video included) into the app's `tmp/screen.png` (`Get-IPadScreen`), `twitcher:press?n=0` presses a button of the
+alert or sheet on screen, `twitcher:press?title=<text>` a button, segment, switch row or list row with that text,
+`twitcher:tab?n=1` switches tabs, `twitcher:back` pops the navigation stack and `twitcher:stats` logs the memory in
+use. `/var/log/syslog` carries the app's log lines (`[Twitcher]`, `Get-TwitcherLog`).
 
 ## Project layout
 
