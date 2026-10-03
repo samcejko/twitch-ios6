@@ -28,11 +28,11 @@ Tested on an iPad 2 (iPad2,2) with iOS 6.1.3. The iPhone layout is implemented b
 
 ## Logging in
 
-Watching needs no account. Logging in needs a Twitch *Client ID*: register an application at
-[dev.twitch.tv/console/apps](https://dev.twitch.tv/console/apps) (category "Application Integration", client type
-**Public**, OAuth redirect URL `http://localhost`) and either put its Client ID into `src/Twitch/TWConfig.h`
-before building or enter it in *Settings > Twitch account > Client ID* in the app. The login then shows a code to
-type at twitch.tv/activate on a computer or phone.
+Watching needs no account. Logging in (*Settings > Twitch account > Log In*) shows a code to type at
+twitch.tv/activate on a computer or phone; the app never sees the password. The login goes through the Twitch
+application "Samcejko iOS6 Client" (a *Public* client, so there is no secret), whose Client ID is in
+`src/Twitch/TWConfig.h`. A fork can register its own at [dev.twitch.tv/console/apps](https://dev.twitch.tv/console/apps)
+(category "Application Integration", client type **Public**, any OAuth redirect URL such as `http://localhost`).
 
 ## Installing on the device
 

@@ -7,11 +7,3 @@
 @property (nonatomic) NSInteger selectedIndex;
 @property (nonatomic, copy) void (^completion)(NSInteger index);
 @end
-
-// One line of text to enter (a Client ID)
-@interface TWTextEntryViewController : UIViewController
-@property (nonatomic, copy) NSString *text;
-@property (nonatomic, copy) NSString *placeholder;
-@property (nonatomic, copy) NSString *explanation;
-@property (nonatomic, copy) void (^completion)(NSString *text);   // nil when cancelled
-@end

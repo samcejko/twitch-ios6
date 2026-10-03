@@ -12,7 +12,6 @@
 "Highlights" = "Sestřihy";
 "Quality" = "Kvalita";
 "Log in to Twitch" = "Přihlášení k Twitchi";
-"Client ID" = "Client ID";
 
 /* Common */
 "Cancel" = "Zrušit";
@@ -33,7 +32,6 @@
 "Nothing here." = "Nic tu není.";
 "Could not refresh" = "Nepodařilo se obnovit";
 "Please wait" = "Počkej prosím";
-"Not set" = "Nenastaveno";
 "Offline" = "Offline";
 "OFFLINE" = "OFFLINE";
 "LIVE" = "LIVE";
@@ -168,10 +166,7 @@
 "No emotes loaded yet." = "Emotikony se ještě nenačetly.";
 
 /* Login */
-"Client ID needed" = "Chybí Client ID";
-"Logging in needs a Twitch application Client ID. Register one for free at dev.twitch.tv (type \"Public\") and enter it in Settings > Account." = "K přihlášení je potřeba Client ID aplikace Twitch. Zaregistruj ho zdarma na dev.twitch.tv (typ „Public“) a zadej v Nastavení > Účet.";
-"No Client ID. Enter one in Settings > Account first." = "Chybí Client ID. Nejdřív ho zadej v Nastavení > Účet.";
-"Twitch did not start the login. Check the Client ID." = "Twitch přihlášení nespustil. Zkontroluj Client ID.";
+"Twitch did not start the login. Try again in a moment." = "Twitch přihlášení nespustil. Zkus to za chvíli znovu.";
 "The code expired. Start the login again." = "Kód vypršel. Spusť přihlášení znovu.";
 "The login was refused." = "Přihlášení bylo odmítnuto.";
 "The login could not be verified." = "Přihlášení se nepodařilo ověřit.";
@@ -201,8 +196,6 @@
 "Log Out" = "Odhlásit";
 "Log In" = "Přihlásit";
 "Log out of Twitch on this device?" = "Odhlásit se z Twitche na tomto zařízení?";
-"Client ID of your Twitch application" = "Client ID tvé aplikace Twitch";
-"Register an application at dev.twitch.tv/console/apps (category: Application Integration, client type: Public, redirect URL: http://localhost) and paste its Client ID here. It is needed only for logging in." = "Zaregistruj aplikaci na dev.twitch.tv/console/apps (kategorie Application Integration, typ klienta Public, redirect URL http://localhost) a sem vlož její Client ID. Je potřeba jen k přihlášení.";
 "Sound in background" = "Zvuk na pozadí";
 "Keep screen on" = "Nezhasínat obrazovku";
 "Text size" = "Velikost písma";

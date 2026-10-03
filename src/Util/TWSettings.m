@@ -25,7 +25,6 @@ NSString * const TWQualityAudio  = @"audio";
         @"showDeletedMessages": @NO,
         @"chatSeparators": @NO,
         @"verifyTLS": @YES,
-        @"clientIdOverride": @"",
     }];
 }
 
@@ -89,18 +88,6 @@ NSString * const TWQualityAudio  = @"audio";
 
 + (BOOL)verifyTLS { return [DEF boolForKey:@"verifyTLS"]; }
 + (void)setVerifyTLS:(BOOL)value { [DEF setBool:value forKey:@"verifyTLS"]; }
-
-#pragma mark - Account
-
-+ (NSString *)clientIdOverride
-{
-    return [[DEF stringForKey:@"clientIdOverride"] stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]] ?: @"";
-}
-
-+ (void)setClientIdOverride:(NSString *)value
-{
-    [DEF setObject:[value stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]] ?: @"" forKey:@"clientIdOverride"];
-}
 
 #pragma mark - Resume positions
 

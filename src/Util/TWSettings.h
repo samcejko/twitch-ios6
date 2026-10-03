@@ -48,10 +48,6 @@ extern NSString * const TWQualityAudio;     // audio only
 + (BOOL)verifyTLS;
 + (void)setVerifyTLS:(BOOL)value;
 
-// Account: the Client ID of the Twitch application the login goes through ("" = the one built into the app)
-+ (NSString *)clientIdOverride;
-+ (void)setClientIdOverride:(NSString *)value;
-
 // Resume positions of videos: seconds by video id (the last 200 are kept)
 + (NSTimeInterval)resumePositionForVideo:(NSString *)videoId;
 + (void)setResumePosition:(NSTimeInterval)seconds forVideo:(NSString *)videoId;

@@ -23,13 +23,6 @@
 
 + (void)presentFrom:(UIViewController *)controller
 {
-    if (![[TWAuth shared] hasClientId]) {
-        UIAlertView *alert = [[UIAlertView alloc] initWithTitle:L(@"Client ID needed")
-                                                        message:L(@"Logging in needs a Twitch application Client ID. Register one for free at dev.twitch.tv (type \"Public\") and enter it in Settings > Account.")
-                                                       delegate:nil cancelButtonTitle:L(@"OK") otherButtonTitles:nil];
-        [alert show];
-        return;
-    }
     TWLoginViewController *vc = [[TWLoginViewController alloc] init];
     UINavigationController *nav = [[UINavigationController alloc] initWithRootViewController:vc];
     nav.modalPresentationStyle = TWIsPad() ? UIModalPresentationFormSheet : UIModalPresentationFullScreen;

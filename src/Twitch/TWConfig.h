@@ -1,10 +1,10 @@
 // Build-time constants of the Twitch integration.
 #import <Foundation/Foundation.h>
 
-// Client ID of the Twitch application the login goes through (dev.twitch.tv/console/apps, client type "Public",
-// which is what the device code flow needs: no secret is involved). Leave empty to ship without one; the user can
-// still enter a Client ID of their own in Settings > Account.
-#define TWTwitchClientID @""
+// Client ID of the Twitch application the login goes through: "Samcejko iOS6 Client", registered by samcejko at
+// dev.twitch.tv/console/apps as a "Public" client, which is what the device code flow needs. It identifies the app,
+// not a user, and is public by design: no secret is involved.
+#define TWTwitchClientID @"cul1df7g9pymz07zrk0hluo57soluv"
 
 // The public Client ID of twitch.tv's own web player. Browsing and playback need no account: they use the same
 // GraphQL API as the website does for a visitor who is not logged in.

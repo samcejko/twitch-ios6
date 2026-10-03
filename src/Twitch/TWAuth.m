@@ -149,16 +149,9 @@ typedef void (^TWRefreshWaiter)(BOOL refreshed);
 
 - (NSString *)clientId
 {
-    NSString *override = [TWSettings clientIdOverride];
-    if (override.length) return override;
-    // tokens stay usable with the Client ID they were issued for, even after the setting was cleared
+    // tokens stay usable with the Client ID they were issued for, should the built-in one ever change
     if (self.tokenClientId.length && self.accessToken.length) return self.tokenClientId;
     return TWTwitchClientID;
-}
-
-- (BOOL)hasClientId
-{
-    return [self clientId].length > 0;
 }
 
 - (NSDictionary *)helixHeaders
@@ -171,11 +164,7 @@ typedef void (^TWRefreshWaiter)(BOOL refreshed);
 
 - (void)beginDeviceFlow:(void (^)(NSString *, NSString *, NSError *))started completion:(void (^)(NSError *))completion
 {
-    NSString *clientId = [self clientId];
-    if (!clientId.length) {
-        if (started) started(nil, nil, TWMakeError(TWErrorAuth, L(@"No Client ID. Enter one in Settings > Account first.")));
-        return;
-    }
+    NSString *clientId = TWTwitchClientID;   // (a new login always goes through the app's own Client ID)
     [self cancelDeviceFlow];
     self.deviceFlowActive = YES;
     NSUInteger generation = ++self.flowGeneration;
@@ -187,7 +176,7 @@ typedef void (^TWRefreshWaiter)(BOOL refreshed);
         NSString *verification = TWStr(d[@"verification_uri"]);
         if (error || !deviceCode.length || !userCode.length) {
             self.deviceFlowActive = NO;
-            if (started) started(nil, nil, error ?: TWMakeError(TWErrorAuth, L(@"Twitch did not start the login. Check the Client ID.")));
+            if (started) started(nil, nil, error ?: TWMakeError(TWErrorAuth, L(@"Twitch did not start the login. Try again in a moment.")));
             return;
         }
         NSTimeInterval interval = MAX(TWDbl(d[@"interval"]), 5.0);

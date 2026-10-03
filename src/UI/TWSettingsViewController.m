@@ -123,7 +123,7 @@ typedef NS_ENUM(NSInteger, TWSettingsSection) {
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
 {
     switch ((TWSettingsSection)section) {
-        case TWSectionAccount: return 3;
+        case TWSectionAccount: return 2;
         case TWSectionPlayback: return 3;
         case TWSectionChat: return 6;
         case TWSectionAppearance: return 1;
@@ -186,15 +186,10 @@ typedef NS_ENUM(NSInteger, TWSettingsSection) {
                     cell.detailTextLabel.text = L(@"Not logged in");
                 }
                 cell.selectionStyle = UITableViewCellSelectionStyleNone;
-            } else if (row == 1) {
+            } else {
                 cell.textLabel.text = auth.isLoggedIn ? L(@"Log Out") : L(@"Log In");
                 cell.textLabel.textColor = auth.isLoggedIn ? [UIColor colorWithRed:0.75 green:0.1 blue:0.1 alpha:1] : [t accentColor];
                 cell.textLabel.textAlignment = NSTextAlignmentCenter;
-            } else {
-                cell.textLabel.text = L(@"Client ID");
-                NSString *cid = [auth clientId];
-                cell.detailTextLabel.text = cid.length ? [NSString stringWithFormat:@"%@…", [cid substringToIndex:MIN(cid.length, (NSUInteger)6)]] : L(@"Not set");
-                cell.accessoryType = UITableViewCellAccessoryDisclosureIndicator;
             }
             break;
         case TWSectionPlayback:
@@ -317,17 +312,6 @@ typedef NS_ENUM(NSInteger, TWSettingsSection) {
         } else {
             [TWLoginViewController presentFrom:self];
         }
-    } else if (sec == TWSectionAccount && row == 2) {
-        TWTextEntryViewController *vc = [[TWTextEntryViewController alloc] init];
-        vc.title = L(@"Client ID");
-        vc.text = [TWSettings clientIdOverride];
-        vc.placeholder = L(@"Client ID of your Twitch application");
-        vc.explanation = L(@"Register an application at dev.twitch.tv/console/apps (category: Application Integration, client type: Public, redirect URL: http://localhost) and paste its Client ID here. It is needed only for logging in.");
-        vc.completion = ^(NSString *text) {
-            [TWSettings setClientIdOverride:text];
-            [TWSettings save];
-        };
-        [self.navigationController pushViewController:vc animated:YES];
     } else if (sec == TWSectionPlayback && row == 0) {
         TWChoiceViewController *vc = [[TWChoiceViewController alloc] init];
         vc.title = L(@"Quality");

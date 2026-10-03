@@ -16,9 +16,8 @@
 @property (nonatomic, readonly, copy) NSString *accessToken;
 @property (nonatomic, readonly, strong) NSDate *expiresAt;
 
-// The Client ID the login uses: the one from Settings, else the one built into the app; "" = none
+// The Client ID the Helix requests go with (the app's own, see TWConfig.h)
 - (NSString *)clientId;
-- (BOOL)hasClientId;
 
 // Headers for Helix: Authorization: Bearer ..., Client-Id: ...
 - (NSDictionary *)helixHeaders;
