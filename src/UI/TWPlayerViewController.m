@@ -832,6 +832,7 @@ static const NSTimeInterval TWLivePauseReloadAfter = 40;   // paused this long: 
 - (void)didEnterBackground
 {
     self.inBackground = YES;
+    TWLog(@"Background: %@", self.wantsToPlay ? ([TWSettings backgroundAudio] ? @"the sound goes on" : @"paused") : @"not playing");
     if (self.wantsToPlay && [TWSettings backgroundAudio] && !self.ended) {
         // without a picture to draw the sound goes on; with the layer attached iOS pauses the player
         self.playerView.player = nil;
@@ -853,6 +854,7 @@ static const NSTimeInterval TWLivePauseReloadAfter = 40;   // paused this long: 
     self.playerView.player = self.player;
     TWMediaProxy *proxy = [TWMediaProxy shared];
     [proxy ensureRunning];
+    TWLog(@"Foreground: proxy generation %ld (was %ld)", (long)proxy.generation, (long)self.proxyGeneration);
     if (proxy.generation != self.proxyGeneration && !self.ended) {
         // the proxy was restarted while we were away: the old addresses are void
         if (self.wantsToPlay) [self startPlayback];

@@ -90,6 +90,7 @@ static BOOL TWCodePointHasNoGlyph(UTF32Char c)
 {
     static const UTF32Char ranges[][2] = {
         { 0x200D, 0x200D },     // zero-width joiner: a joined sequence falls apart into its parts, which do draw
+        { 0xFFFC, 0xFFFC },     // object replacement character (a dotted box): the chat layout uses it for its images
         // symbols that became emoji in 2014 (⌨ ⏏ ☘ ☠ ☢ ⚔ ⚖ ⚙ ⛈ ⛏ ✍ ✝ ❣ …): no font of this system has them
         { 0x2328, 0x2328 }, { 0x23CF, 0x23CF }, { 0x23ED, 0x23EF }, { 0x23F1, 0x23F2 }, { 0x23F8, 0x23FA }, { 0x2618, 0x2618 },
         { 0x2620, 0x2620 }, { 0x2622, 0x2623 }, { 0x2626, 0x2626 }, { 0x262A, 0x262A }, { 0x262E, 0x262F }, { 0x2638, 0x2639 },
@@ -133,8 +134,11 @@ static BOOL TWCodePointHasNoGlyph(UTF32Char c)
         }
         if (TWCodePointHasNoGlyph(cp)) {
             if (!out) out = [[text substringToIndex:i] mutableCopy];
-            // an emoji squeezed between two words stood for a space ("LIVE🧢DRAMA"): one is left in its place
             NSCharacterSet *spaces = [NSCharacterSet whitespaceCharacterSet];
+            // the emoji's own variation selector goes with it; at the start of the text so does the space after it
+            if (i + len < n && [text characterAtIndex:i + len] == 0xFE0F) len++;
+            while (out.length == 0 && i + len < n && [spaces characterIsMember:[text characterAtIndex:i + len]]) len++;
+            // an emoji squeezed between two words stood for a space ("LIVE🧢DRAMA"): one is left in its place
             BOOL spaceBefore = out.length == 0 || [spaces characterIsMember:[out characterAtIndex:out.length - 1]];
             BOOL spaceAfter = i + len >= n || [spaces characterIsMember:[text characterAtIndex:i + len]];
             NSUInteger kept = 0;
