@@ -41,7 +41,8 @@ application "Samcejko iOS6 Client" (a *Public* client, so there is no secret), w
 2. Download the `.ipa` or `.deb` of the latest [release](https://github.com/samcejko/twitch-ios6/releases)
    (both carry the same build; the checksums are in the release notes).
 3. Copy the `.ipa` to the device and run `ipainstaller -f Twitcher-<version>.ipa`, or use iFunBox / 3uTools.
-   The `.deb` works too (`dpkg -i`, then `uicache`) and installs into `/Applications`.
+   The `.deb` works too (`dpkg -i`, then `su mobile -c uicache`) and installs into `/Applications`; do not keep
+   both installed at once.
 
 `tools/gh-release.ps1 -RunDir packages\run-<id> -Sha <commit>` publishes a release from a downloaded CI run.
 
