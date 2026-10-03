@@ -231,3 +231,15 @@
 "The player picks what the connection allows, up to what the device decodes." = "Přehrávač volí podle připojení, až po to, co zařízení zvládne.";
 "The streamer's own quality, when the device can decode it." = "Kvalita, v jaké streamer vysílá, pokud ji zařízení zvládne.";
 "Just the sound, for the background." = "Jen zvuk, na pozadí.";
+
+/* Player buttons (VoiceOver labels) */
+"Play" = "Přehrát";
+"Pause" = "Pozastavit";
+"Back 10 seconds" = "Zpět o 10 sekund";
+"Forward 10 seconds" = "Vpřed o 10 sekund";
+"Show chat" = "Zobrazit chat";
+"Hide chat" = "Skrýt chat";
+"Full screen" = "Celá obrazovka";
+"Exit full screen" = "Ukončit celou obrazovku";
+"Back" = "Zpět";
+"Channel" = "Kanál";

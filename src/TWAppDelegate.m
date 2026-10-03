@@ -1,15 +1,27 @@
 #import "TWAppDelegate.h"
 #import "TWRootViewController.h"
+#import "TWNavigator.h"
 #import "TWTLSSocket.h"
 #import "TWMediaProxy.h"
 #import "TWImageLoader.h"
 #import "TWAuth.h"
+#import "TWGQL.h"
 #import "TWSettings.h"
 #import "TWTheme.h"
 #import "TWUtils.h"
 #import "TWCommon.h"
 #include <dlfcn.h>
 #include <signal.h>
+#include <mach/mach.h>
+
+// A button "named" text: by its title or by its accessibility label (icon buttons have no title), case does not matter
+static BOOL TWButtonMatches(UIButton *button, NSString *text)
+{
+    for (NSString *name in @[ button.currentTitle ?: @"", button.accessibilityLabel ?: @"" ]) {
+        if (name.length && [name rangeOfString:text options:NSCaseInsensitiveSearch].location != NSNotFound) return YES;
+    }
+    return NO;
+}
 
 @implementation TWAppDelegate
 
@@ -33,9 +45,11 @@
     return YES;
 }
 
-// twitcher:channel/<login> opens the channel page, twitcher:watch/<login> the player; over SSH (uiopen) a few
-// commands help checking the app: twitcher:snapshot and twitcher:screen write tmp/screen.png, twitcher:press?n=1
-// presses a button of the alert on screen. The commands need a file named "debug" in the app's Documents folder.
+// twitcher:channel/<login> opens the channel page, twitcher:watch/<login> the player, twitcher:video/<id> a past
+// broadcast and twitcher:clip/<slug> a clip. Over SSH (uiopen) a few commands help checking the app: twitcher:snapshot
+// and twitcher:screen write tmp/screen.png, twitcher:press?n=1 presses a button of the alert on screen, press?title=Chat
+// a button with that title or label, twitcher:tab?n=1 switches the tab and twitcher:stats logs the memory in use.
+// The commands need a file named "debug" in the app's Documents folder.
 - (BOOL)application:(UIApplication *)application openURL:(NSURL *)url sourceApplication:(NSString *)sourceApplication annotation:(id)annotation
 {
     NSString *s = url.absoluteString ?: @"";
@@ -60,8 +74,36 @@
         [self.rootViewController openChannelLogin:[params[@"channel"] lowercaseString] watch:[params[@"watch"] boolValue]];
         return YES;
     }
+    if ([target hasPrefix:@"video/"]) {
+        NSString *videoId = [target substringFromIndex:@"video/".length];
+        if (!videoId.length) return YES;
+        __weak TWAppDelegate *weakSelf = self;
+        [TWGQL video:videoId completion:^(TWVideo *video, NSError *error) {
+            if (video) [TWNavigator openVideo:video from:weakSelf.rootViewController];
+            else TWLog(@"Video %@: %@", videoId, error.localizedDescription);
+        }];
+        return YES;
+    }
+    if ([target hasPrefix:@"clip/"]) {
+        TWClip *clip = [[TWClip alloc] init];
+        clip.slug = [target substringFromIndex:@"clip/".length];
+        clip.title = clip.slug;
+        if (clip.slug.length) [TWNavigator openClip:clip from:self.rootViewController];
+        return YES;
+    }
     BOOL debug = [[NSFileManager defaultManager] fileExistsAtPath:[[TWUtils documentsPath] stringByAppendingPathComponent:@"debug"]];
     if (!debug) return YES;
+    if ([target isEqualToString:@"stats"]) {
+        struct task_basic_info info;
+        mach_msg_type_number_t count = TASK_BASIC_INFO_COUNT;
+        if (task_info(mach_task_self(), TASK_BASIC_INFO, (task_info_t)&info, &count) == KERN_SUCCESS) {
+            TWLog(@"Memory: %.1f MB resident, %.1f MB virtual", info.resident_size / 1048576.0, info.virtual_size / 1048576.0);
+        }
+        UIViewController *top = [TWNavigator presenterFrom:nil];
+        TWLog(@"Windows: %lu, top controller: %@, proxy generation %ld", (unsigned long)[UIApplication sharedApplication].windows.count,
+              NSStringFromClass([top class]), (long)[TWMediaProxy shared].generation);
+        return YES;
+    }
     if ([target isEqualToString:@"snapshot"]) {
         // every visible window drawn into one picture (alerts and sheets have windows of their own)
         CGSize size = [UIScreen mainScreen].bounds.size;
@@ -113,8 +155,7 @@
                 if ([sheet.delegate respondsToSelector:@selector(actionSheet:clickedButtonAtIndex:)]) [sheet.delegate actionSheet:sheet clickedButtonAtIndex:n];
                 [sheet dismissWithClickedButtonIndex:n animated:NO];
                 pressed = YES;
-            } else if (byTitle.length && [v isKindOfClass:[UIButton class]] && !v.hidden &&
-                       [((UIButton *)v).currentTitle rangeOfString:byTitle].location != NSNotFound) {
+            } else if (byTitle.length && [v isKindOfClass:[UIButton class]] && !v.hidden && TWButtonMatches((UIButton *)v, byTitle)) {
                 [(UIButton *)v sendActionsForControlEvents:UIControlEventTouchUpInside];
                 pressed = YES;
             } else {

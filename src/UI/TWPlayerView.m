@@ -66,7 +66,9 @@ static const CGFloat TWBarHeight = 44;
         _bottomGradient = [[UIImageView alloc] initWithImage:[t controlsGradientImageTop:NO]];
         [_controls addSubview:_bottomGradient];
 
+        // (the icon buttons carry labels for VoiceOver; they also let the debug URL commands find them by name)
         _closeButton = [self iconButtonWithImage:[t closeIconWhite] action:@selector(closeTapped)];
+        _closeButton.accessibilityLabel = L(@"Close");
         _titleLabel = [[UILabel alloc] initWithFrame:CGRectZero];
         _titleLabel.backgroundColor = [UIColor clearColor];
         _titleLabel.textColor = [UIColor whiteColor];
@@ -83,8 +85,10 @@ static const CGFloat TWBarHeight = 44;
         [_subtitleButton setTitleColor:[UIColor colorWithWhite:0.85 alpha:1] forState:UIControlStateNormal];
         [_subtitleButton setTitleShadowColor:[UIColor colorWithWhite:0 alpha:0.7] forState:UIControlStateNormal];
         [_subtitleButton addTarget:self action:@selector(channelTapped) forControlEvents:UIControlEventTouchUpInside];
+        _subtitleButton.accessibilityLabel = L(@"Channel");
         [_controls addSubview:_subtitleButton];
         _qualityButton = [UIButton buttonWithType:UIButtonTypeCustom];
+        _qualityButton.accessibilityLabel = L(@"Quality");
         _qualityButton.titleLabel.font = [UIFont boldSystemFontOfSize:12];
         [_qualityButton setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
         [_qualityButton setBackgroundImage:[t darkPillImage] forState:UIControlStateNormal];
@@ -92,8 +96,11 @@ static const CGFloat TWBarHeight = 44;
         [_controls addSubview:_qualityButton];
 
         _playButton = [self iconButtonWithImage:[t playIcon] action:@selector(playTapped)];
+        _playButton.accessibilityLabel = L(@"Play");
         _backButton = [self iconButtonWithImage:[t skipIconForward:NO] action:@selector(backTapped)];
+        _backButton.accessibilityLabel = L(@"Back 10 seconds");
         _forwardButton = [self iconButtonWithImage:[t skipIconForward:YES] action:@selector(forwardTapped)];
+        _forwardButton.accessibilityLabel = L(@"Forward 10 seconds");
         _liveButton = [UIButton buttonWithType:UIButtonTypeCustom];
         _liveButton.titleLabel.font = [UIFont boldSystemFontOfSize:11];
         [_liveButton setTitle:L(@"LIVE") forState:UIControlStateNormal];
@@ -123,7 +130,9 @@ static const CGFloat TWBarHeight = 44;
         _timeLabel.textAlignment = NSTextAlignmentRight;
         [_controls addSubview:_timeLabel];
         _chatButton = [self iconButtonWithImage:[t chatIconOn:YES] action:@selector(chatTapped)];
+        _chatButton.accessibilityLabel = L(@"Chat");
         _fullscreenButton = [self iconButtonWithImage:[t fullscreenIconEnter:YES] action:@selector(fullscreenTapped)];
+        _fullscreenButton.accessibilityLabel = L(@"Full screen");
         _adLabel = [[UILabel alloc] initWithFrame:CGRectZero];
         _adLabel.backgroundColor = [UIColor colorWithRed:0.85 green:0.65 blue:0.1 alpha:0.9];
         _adLabel.textColor = [UIColor blackColor];
@@ -192,10 +201,33 @@ static const CGFloat TWBarHeight = 44;
 
 - (void)setIsLive:(BOOL)isLive { _isLive = isLive; [self updateModeViews]; }
 - (void)setChatButtonHidden:(BOOL)hidden { _chatButtonHidden = hidden; [self updateModeViews]; }
-- (void)setPlaying:(BOOL)playing { _playing = playing; [self.playButton setImage:playing ? [[TWTheme shared] pauseIcon] : [[TWTheme shared] playIcon] forState:UIControlStateNormal]; }
-- (void)setFullscreen:(BOOL)fullscreen { _fullscreen = fullscreen; [self.fullscreenButton setImage:[[TWTheme shared] fullscreenIconEnter:!fullscreen] forState:UIControlStateNormal]; }
-- (void)setChatVisible:(BOOL)chatVisible { _chatVisible = chatVisible; [self.chatButton setImage:[[TWTheme shared] chatIconOn:chatVisible] forState:UIControlStateNormal]; }
-- (void)setCloseIsBack:(BOOL)closeIsBack { _closeIsBack = closeIsBack; [self.closeButton setImage:closeIsBack ? [[TWTheme shared] backChevronWhite] : [[TWTheme shared] closeIconWhite] forState:UIControlStateNormal]; }
+- (void)setPlaying:(BOOL)playing
+{
+    _playing = playing;
+    [self.playButton setImage:playing ? [[TWTheme shared] pauseIcon] : [[TWTheme shared] playIcon] forState:UIControlStateNormal];
+    self.playButton.accessibilityLabel = playing ? L(@"Pause") : L(@"Play");
+}
+
+- (void)setFullscreen:(BOOL)fullscreen
+{
+    _fullscreen = fullscreen;
+    [self.fullscreenButton setImage:[[TWTheme shared] fullscreenIconEnter:!fullscreen] forState:UIControlStateNormal];
+    self.fullscreenButton.accessibilityLabel = fullscreen ? L(@"Exit full screen") : L(@"Full screen");
+}
+
+- (void)setChatVisible:(BOOL)chatVisible
+{
+    _chatVisible = chatVisible;
+    [self.chatButton setImage:[[TWTheme shared] chatIconOn:chatVisible] forState:UIControlStateNormal];
+    self.chatButton.accessibilityLabel = chatVisible ? L(@"Hide chat") : L(@"Show chat");
+}
+
+- (void)setCloseIsBack:(BOOL)closeIsBack
+{
+    _closeIsBack = closeIsBack;
+    [self.closeButton setImage:closeIsBack ? [[TWTheme shared] backChevronWhite] : [[TWTheme shared] closeIconWhite] forState:UIControlStateNormal];
+    self.closeButton.accessibilityLabel = closeIsBack ? L(@"Back") : L(@"Close");
+}
 - (void)setTitle:(NSString *)title { _title = [title copy]; self.titleLabel.text = title; }
 - (void)setSubtitle:(NSString *)subtitle { _subtitle = [subtitle copy]; [self.subtitleButton setTitle:subtitle forState:UIControlStateNormal]; }
 - (void)setStatusText:(NSString *)statusText { _statusText = [statusText copy]; self.statusLabel.text = statusText; }

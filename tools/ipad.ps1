@@ -75,7 +75,8 @@ function Get-IPadCrashLogs {
     param([string]$IPadHost = $script:IPadDefaultHost, [string]$OutDir = '')
     if (-not $OutDir) { $OutDir = Join-Path (Get-Location) 'packages\crashlogs' }
     New-Item -ItemType Directory -Force -Path $OutDir | Out-Null
-    $list = Invoke-IPad -IPadHost $IPadHost -Command 'ls -t /var/mobile/Library/Logs/CrashReporter/ 2>/dev/null | grep -i twitcher | head -n 5'
+    # (the iPad has no head/tail/wc/awk; sed does their work)
+    $list = Invoke-IPad -IPadHost $IPadHost -Command "ls -t /var/mobile/Library/Logs/CrashReporter/ 2>/dev/null | grep -i twitcher | sed -n '1,5p'"
     foreach ($f in (@($list) -join "`n" -split "`n" | Where-Object { $_.Trim() })) {
         $name = $f.Trim()
         Copy-FromIPad -IPadHost $IPadHost -RemotePath "/var/mobile/Library/Logs/CrashReporter/$name" -LocalPath (Join-Path $OutDir $name)
@@ -86,5 +87,45 @@ function Get-IPadCrashLogs {
 
 function Get-IPadSyslog {
     param([string]$IPadHost = $script:IPadDefaultHost, [int]$Lines = 200)
-    Invoke-IPad -IPadHost $IPadHost -Command "if [ -f /var/log/syslog ]; then grep -i twitcher /var/log/syslog | tail -n $Lines; else echo 'no /var/log/syslog (install the syslogd package from Cydia)'; fi"
+    $tail = "sed -e :a -e '`$q;N;$($Lines + 1),`$D;ba'"   # (tail -n emulated: the iPad has no tail)
+    Invoke-IPad -IPadHost $IPadHost -Command "if [ -f /var/log/syslog ]; then grep -i twitcher /var/log/syslog | $tail; else echo 'no /var/log/syslog (install the syslogd package from Cydia)'; fi"
+}
+
+# The app's own log lines ([Twitcher] prefix), the last $Lines of them
+function Get-TwitcherLog {
+    param([int]$Lines = 40, [string]$IPadHost = $script:IPadDefaultHost)
+    Invoke-IPad -IPadHost $IPadHost -Command "grep '\[Twitcher\]' /var/log/syslog | sed -e :a -e '`$q;N;$($Lines + 1),`$D;ba'"
+}
+
+# The app's sandbox folder on the iPad (it changes with a reinstall)
+function Get-IPadAppContainer {
+    param([string]$IPadHost = $script:IPadDefaultHost)
+    $out = (Invoke-IPad -IPadHost $IPadHost -Command "ls -d /var/mobile/Applications/*/Twitcher.app 2>/dev/null | sed -n '1p'" | Out-String).Trim()
+    if (-not $out) { throw 'Twitcher is not installed on the iPad' }
+    $out -replace '/Twitcher\.app$', ''
+}
+
+# Turns the debug URL commands on (twitcher:snapshot, screen, press, tab, stats): a file "debug" in the app's Documents
+function Enable-TwitcherDebug {
+    param([string]$IPadHost = $script:IPadDefaultHost)
+    $container = Get-IPadAppContainer -IPadHost $IPadHost
+    Invoke-IPad -IPadHost $IPadHost -Command "mkdir -p '$container/Documents'; echo on > '$container/Documents/debug'; chown mobile:mobile '$container/Documents/debug'; echo DEBUG_ON" | Out-String
+}
+
+# Opens a twitcher: URL in the app (uiopen); -WaitSeconds sleeps on the iPad afterwards so the UI settles
+function Invoke-Twitcher {
+    param([Parameter(Mandatory = $true)][string]$Url, [int]$WaitSeconds = 0, [string]$IPadHost = $script:IPadDefaultHost)
+    $cmd = "uiopen '$Url'"
+    if ($WaitSeconds -gt 0) { $cmd += "; sleep $WaitSeconds" }
+    Invoke-IPad -IPadHost $IPadHost -Command $cmd
+}
+
+# Saves what the iPad shows into a PNG. -Real is the system's screen grab (video included); otherwise the app draws its windows.
+function Get-IPadScreen {
+    param([Parameter(Mandatory = $true)][string]$OutFile, [switch]$Real, [string]$IPadHost = $script:IPadDefaultHost)
+    $kind = if ($Real) { 'screen' } else { 'snapshot' }
+    $container = Get-IPadAppContainer -IPadHost $IPadHost
+    Invoke-IPad -IPadHost $IPadHost -Command "rm -f /tmp/twitcher-screen.png; uiopen 'twitcher:$kind'; sleep 3; cp '$container/tmp/screen.png' /tmp/twitcher-screen.png" | Out-Null
+    Copy-FromIPad -IPadHost $IPadHost -RemotePath '/tmp/twitcher-screen.png' -LocalPath $OutFile
+    Get-Item $OutFile
 }

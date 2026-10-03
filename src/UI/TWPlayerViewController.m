@@ -410,6 +410,9 @@ static const NSTimeInterval TWLivePauseReloadAfter = 40;   // paused this long: 
     self.currentVariant = chosen;
     self.proxyGeneration = [TWMediaProxy shared].generation;
     self.playerView.qualityTitle = chosen ? [chosen title] : L(@"Auto");
+    NSMutableArray *names = [NSMutableArray array];   // (renditions beyond this device marked with a cross)
+    for (TWVariant *v in self.variants) [names addObject:[v.name stringByAppendingString:[TWPlayback deviceCanPlay:v] ? @"" : @"✗"]];
+    TWLog(@"Renditions: %@; quality %@ -> %@", [names componentsJoinedByString:@", "], self.quality ?: @"auto", chosen ? chosen.name : @"auto (master playlist)");
     [self loadItemWithURL:url];
 }
 
