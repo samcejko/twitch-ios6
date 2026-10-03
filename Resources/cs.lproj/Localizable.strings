@@ -178,6 +178,8 @@
 "Copy Code" = "Kopírovat kód";
 "Open in Surfari" = "Otevřít v Surfari";
 "Open in Safari" = "Otevřít v Safari";
+"Open in…" = "Otevřít v…";
+"Copy link" = "Kopírovat odkaz";
 "Code copied. Waiting for the confirmation on twitch.tv…" = "Kód zkopírován. Čekám na potvrzení na twitch.tv…";
 
 /* Settings */

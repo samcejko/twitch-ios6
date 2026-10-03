@@ -4,6 +4,7 @@
 #import "TWNavigator.h"
 #import "TWTheme.h"
 #import "TWUtils.h"
+#import "TWExternalOpen.h"
 #import "TWCommon.h"
 
 @interface TWLoginViewController () <UIAlertViewDelegate>
@@ -93,11 +94,10 @@
     self.codeCopyButton.hidden = YES;
     [self.view addSubview:self.codeCopyButton];
 
-    // the user's own browser app (Surfari) opens pages this device's Safari cannot
-    BOOL hasBrowser = [[UIApplication sharedApplication] canOpenURL:[NSURL URLWithString:@"browser:home"]];
+    // a chooser opens the activation page in Safari or in Surfari (the user's own iOS 6 browser)
     self.browserButton = [UIButton buttonWithType:UIButtonTypeCustom];
     self.browserButton.titleLabel.font = [UIFont boldSystemFontOfSize:14];
-    [self.browserButton setTitle:hasBrowser ? L(@"Open in Surfari") : L(@"Open in Safari") forState:UIControlStateNormal];
+    [self.browserButton setTitle:L(@"Open in…") forState:UIControlStateNormal];
     [self.browserButton setTitleColor:[t primaryTextColor] forState:UIControlStateNormal];
     [self.browserButton setBackgroundImage:[t buttonImageHighlighted:NO] forState:UIControlStateNormal];
     [self.browserButton setBackgroundImage:[t buttonImageHighlighted:YES] forState:UIControlStateHighlighted];
@@ -196,10 +196,7 @@
 - (void)browserTapped
 {
     NSString *target = self.verificationURL.length ? self.verificationURL : @"https://www.twitch.tv/activate";
-    NSURL *browser = [NSURL URLWithString:[@"browser:" stringByAppendingString:target]];
-    UIApplication *app = [UIApplication sharedApplication];
-    if ([app canOpenURL:browser]) [app openURL:browser];
-    else [app openURL:[NSURL URLWithString:target]];
+    [TWExternalOpen presentOpenInForURL:[NSURL URLWithString:target] from:self anchor:self.browserButton];
 }
 
 @end

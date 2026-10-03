@@ -10,6 +10,7 @@
 #import "TWEmotes.h"
 #import "TWFavorites.h"
 #import "TWNavigator.h"
+#import "TWExternalOpen.h"
 #import "TWSettings.h"
 #import "TWTheme.h"
 #import "TWUtils.h"
@@ -960,11 +961,8 @@ static const NSTimeInterval TWLivePauseReloadAfter = 40;   // paused this long: 
 {
     NSURL *u = [NSURL URLWithString:url];
     if (!u) return;
-    UIApplication *app = [UIApplication sharedApplication];
-    // the user's own browser app knows today's web; this device's Safari does not
-    NSURL *browser = [NSURL URLWithString:[@"browser:" stringByAppendingString:url]];
-    if ([app canOpenURL:browser]) [app openURL:browser];
-    else [app openURL:u];
+    // a chooser: copy the link, or open it in Safari or Surfari (the user's own iOS 6 browser)
+    [TWExternalOpen presentShareSheetForURL:u from:self anchor:nil];
 }
 
 - (void)enterChatText:(NSString *)text send:(BOOL)send
