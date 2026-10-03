@@ -199,9 +199,11 @@ typedef NS_ENUM(NSInteger, TWChannelTab) {
     CGFloat y = bannerH + 6;
     // buttons on the right of the name on wide screens, in a row below the avatar on narrow ones
     CGFloat buttonW = 120, buttonH = 32;
+    // (the favourite button grows with its title: "Add to Favourites" is longer in some languages)
+    CGFloat favoriteW = MAX(110, ceil([self.favoriteButton.currentTitle sizeWithFont:self.favoriteButton.titleLabel.font].width) + 32);
     if (wide) {
         self.watchButton.frame = CGRectMake(w - pad - buttonW, y, buttonW, buttonH);
-        self.favoriteButton.frame = CGRectMake(w - pad - buttonW - 8 - 110, y, 110, buttonH);
+        self.favoriteButton.frame = CGRectMake(w - pad - buttonW - 8 - favoriteW, y, favoriteW, buttonH);
         CGFloat textW = CGRectGetMinX(self.favoriteButton.frame) - 10 - textX;
         self.nameLabel.frame = CGRectMake(textX, y, textW, 24);
         self.followersLabel.frame = CGRectMake(textX, y + 24, textW, 16);
@@ -211,7 +213,7 @@ typedef NS_ENUM(NSInteger, TWChannelTab) {
         self.followersLabel.frame = CGRectMake(textX, y + 24, w - textX - pad, 16);
         y = bannerH + avatarSize / 2 + 8;
         self.watchButton.frame = CGRectMake(pad, y, buttonW, buttonH);
-        self.favoriteButton.frame = CGRectMake(pad + buttonW + 8, y, 110, buttonH);
+        self.favoriteButton.frame = CGRectMake(pad + buttonW + 8, y, MIN(favoriteW, w - pad - (pad + buttonW + 8)), buttonH);
         y += buttonH + 8;
     }
     CGFloat textW = w - 2 * pad;

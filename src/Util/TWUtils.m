@@ -90,6 +90,12 @@ static BOOL TWCodePointHasNoGlyph(UTF32Char c)
 {
     static const UTF32Char ranges[][2] = {
         { 0x200D, 0x200D },     // zero-width joiner: a joined sequence falls apart into its parts, which do draw
+        // symbols that became emoji in 2014 (⌨ ⏏ ☘ ☠ ☢ ⚔ ⚖ ⚙ ⛈ ⛏ ✍ ✝ ❣ …): no font of this system has them
+        { 0x2328, 0x2328 }, { 0x23CF, 0x23CF }, { 0x23ED, 0x23EF }, { 0x23F1, 0x23F2 }, { 0x23F8, 0x23FA }, { 0x2618, 0x2618 },
+        { 0x2620, 0x2620 }, { 0x2622, 0x2623 }, { 0x2626, 0x2626 }, { 0x262A, 0x262A }, { 0x262E, 0x262F }, { 0x2638, 0x2639 },
+        { 0x2692, 0x2692 }, { 0x2694, 0x2697 }, { 0x2699, 0x2699 }, { 0x269B, 0x269C }, { 0x26A7, 0x26A7 }, { 0x26B0, 0x26B1 },
+        { 0x26C8, 0x26C8 }, { 0x26CF, 0x26CF }, { 0x26D1, 0x26D1 }, { 0x26D3, 0x26D3 }, { 0x26E9, 0x26E9 }, { 0x26F0, 0x26F1 },
+        { 0x26F4, 0x26F4 }, { 0x26F7, 0x26F9 }, { 0x270D, 0x270D }, { 0x271D, 0x271D }, { 0x2721, 0x2721 }, { 0x2763, 0x2763 },
         { 0x1F1E6, 0x1F1FF },   // regional indicators (flags): only ten flags have pictures here
         { 0x1F321, 0x1F32F }, { 0x1F336, 0x1F336 }, { 0x1F37D, 0x1F37F }, { 0x1F394, 0x1F39F }, { 0x1F3CB, 0x1F3DF },
         { 0x1F3F1, 0x1F3FF },   // (0x1F3FB-0x1F3FF are the skin tone modifiers)
@@ -127,16 +133,27 @@ static BOOL TWCodePointHasNoGlyph(UTF32Char c)
         }
         if (TWCodePointHasNoGlyph(cp)) {
             if (!out) out = [[text substringToIndex:i] mutableCopy];
-            [dropped addObject:[NSValue valueWithRange:NSMakeRange(i, len)]];
+            // an emoji squeezed between two words stood for a space ("LIVE🧢DRAMA"): one is left in its place
+            NSCharacterSet *spaces = [NSCharacterSet whitespaceCharacterSet];
+            BOOL spaceBefore = out.length == 0 || [spaces characterIsMember:[out characterAtIndex:out.length - 1]];
+            BOOL spaceAfter = i + len >= n || [spaces characterIsMember:[text characterAtIndex:i + len]];
+            NSUInteger kept = 0;
+            if (!spaceBefore && !spaceAfter) {
+                [out appendString:@" "];
+                kept = 1;
+            }
+            if (len > kept) [dropped addObject:[NSValue valueWithRange:NSMakeRange(i, len - kept)]];
         } else if (out) {
             [out appendString:[text substringWithRange:NSMakeRange(i, len)]];
         }
         i += len - 1;
     }
     if (!out) return text;
-    // (an emoji between two words leaves a double space behind)
-    while ([out rangeOfString:@"  "].location != NSNotFound) [out replaceOccurrencesOfString:@"  " withString:@" " options:0 range:NSMakeRange(0, out.length)];
-    return [out stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
+    // (only the end is trimmed: a shorter start would move the emote positions)
+    while (out.length && [[NSCharacterSet whitespaceCharacterSet] characterIsMember:[out characterAtIndex:out.length - 1]]) {
+        [out deleteCharactersInRange:NSMakeRange(out.length - 1, 1)];
+    }
+    return out;
 }
 
 #pragma mark - Encoding

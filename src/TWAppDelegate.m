@@ -180,8 +180,8 @@ static BOOL TWPressView(UIView *v, NSString *text)
             TWLog(@"Memory: %.1f MB resident, %.1f MB virtual", info.resident_size / 1048576.0, info.virtual_size / 1048576.0);
         }
         UIViewController *top = [TWNavigator presenterFrom:nil];
-        TWLog(@"Windows: %lu, top controller: %@, proxy generation %ld", (unsigned long)[UIApplication sharedApplication].windows.count,
-              NSStringFromClass([top class]), (long)[TWMediaProxy shared].generation);
+        TWLog(@"Windows: %lu, top controller: %@, proxy generation %ld, dark theme %d", (unsigned long)[UIApplication sharedApplication].windows.count,
+              NSStringFromClass([top class]), (long)[TWMediaProxy shared].generation, [TWTheme shared].isDark);
         return YES;
     }
     if ([target isEqualToString:@"snapshot"]) {
