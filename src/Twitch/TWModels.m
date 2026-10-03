@@ -1,5 +1,12 @@
 #import "TWModels.h"
+#import "TWUtils.h"
 #import "TWCommon.h"
+
+// A title or description as shown: trimmed, without the emoji this system cannot draw
+static NSString *TWTitle(id value)
+{
+    return [TWUtils displayText:[TWStr(value) stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]]];
+}
 
 static NSString *TWJoinedName(NSString *displayName, NSString *login)
 {
@@ -17,7 +24,7 @@ static NSString *TWJoinedName(NSString *displayName, NSString *login)
     NSDictionary *user = TWDict(broadcaster) ?: TWDict(node[@"broadcaster"]);
     TWStream *s = [[TWStream alloc] init];
     s.streamId = TWStr(node[@"id"]);
-    s.title = [TWStr(node[@"title"]) stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
+    s.title = TWTitle(node[@"title"]);
     s.viewers = TWInt(node[@"viewersCount"]);
     s.startedAt = TWDateFromISO(TWStr(node[@"createdAt"]));
     s.language = [TWStr(node[@"language"]) lowercaseString];
@@ -44,7 +51,7 @@ static NSString *TWJoinedName(NSString *displayName, NSString *login)
     if (!item) return nil;
     TWStream *s = [[TWStream alloc] init];
     s.streamId = TWStr(item[@"id"]);
-    s.title = [TWStr(item[@"title"]) stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
+    s.title = TWTitle(item[@"title"]);
     s.viewers = TWInt(item[@"viewer_count"]);
     s.startedAt = TWDateFromISO(TWStr(item[@"started_at"]));
     s.language = [TWStr(item[@"language"]) lowercaseString];
@@ -112,7 +119,7 @@ static NSString *TWJoinedName(NSString *displayName, NSString *login)
     c.userId = TWStr(user[@"id"]);
     c.login = [TWStr(user[@"login"]) lowercaseString];
     c.displayName = TWStr(user[@"displayName"]) ?: c.login;
-    c.bio = [TWStr(user[@"description"]) stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
+    c.bio = TWTitle(user[@"description"]);
     c.avatarURL = TWStr(user[@"profileImageURL"]);
     c.bannerURL = TWStr(user[@"bannerImageURL"]);
     c.offlineImageURL = TWStr(user[@"offlineImageURL"]);
@@ -152,7 +159,7 @@ static NSString *TWJoinedName(NSString *displayName, NSString *login)
     if (!node) return nil;
     TWVideo *v = [[TWVideo alloc] init];
     v.videoId = TWStr(node[@"id"]);
-    v.title = [TWStr(node[@"title"]) stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
+    v.title = TWTitle(node[@"title"]);
     v.length = TWDbl(node[@"lengthSeconds"]);
     v.views = TWInt(node[@"viewCount"]);
     v.publishedAt = TWDateFromISO(TWStr(node[@"publishedAt"])) ?: TWDateFromISO(TWStr(node[@"createdAt"]));
@@ -177,7 +184,7 @@ static NSString *TWJoinedName(NSString *displayName, NSString *login)
     if (!node) return nil;
     TWClip *c = [[TWClip alloc] init];
     c.slug = TWStr(node[@"slug"]);
-    c.title = [TWStr(node[@"title"]) stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
+    c.title = TWTitle(node[@"title"]);
     c.views = TWInt(node[@"viewCount"]);
     c.duration = TWDbl(node[@"durationSeconds"]);
     c.createdAt = TWDateFromISO(TWStr(node[@"createdAt"]));

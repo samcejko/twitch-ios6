@@ -85,6 +85,60 @@
     return [[s substringWithRange:r] stringByAppendingString:@"…"];
 }
 
+// Emoji added to Unicode after iOS 6 (2012) have no glyph in its fonts and come out as empty boxes.
+static BOOL TWCodePointHasNoGlyph(UTF32Char c)
+{
+    static const UTF32Char ranges[][2] = {
+        { 0x200D, 0x200D },     // zero-width joiner: a joined sequence falls apart into its parts, which do draw
+        { 0x1F1E6, 0x1F1FF },   // regional indicators (flags): only ten flags have pictures here
+        { 0x1F321, 0x1F32F }, { 0x1F336, 0x1F336 }, { 0x1F37D, 0x1F37F }, { 0x1F394, 0x1F39F }, { 0x1F3CB, 0x1F3DF },
+        { 0x1F3F1, 0x1F3FF },   // (0x1F3FB-0x1F3FF are the skin tone modifiers)
+        { 0x1F43F, 0x1F43F }, { 0x1F441, 0x1F441 }, { 0x1F4F8, 0x1F4F8 }, { 0x1F4FD, 0x1F4FF }, { 0x1F53E, 0x1F54F },
+        { 0x1F568, 0x1F5FA }, { 0x1F641, 0x1F644 }, { 0x1F6C6, 0x1F6FF }, { 0x1F7E0, 0x1F7FF }, { 0x1F900, 0x1F9FF },
+        { 0x1FA70, 0x1FAFF },
+    };
+    if (c < 0x200D) return NO;
+    for (size_t i = 0; i < sizeof(ranges) / sizeof(ranges[0]); i++) {
+        if (c >= ranges[i][0] && c <= ranges[i][1]) return YES;
+    }
+    return NO;
+}
+
++ (NSString *)displayText:(NSString *)text
+{
+    return [self displayText:text dropped:nil];
+}
+
++ (NSString *)displayText:(NSString *)text dropped:(NSMutableArray *)dropped
+{
+    NSUInteger n = text.length;
+    if (!n) return text;
+    NSMutableString *out = nil;   // (made only when something has to go: most strings pass through untouched)
+    for (NSUInteger i = 0; i < n; i++) {
+        unichar c = [text characterAtIndex:i];
+        UTF32Char cp = c;
+        NSUInteger len = 1;
+        if (CFStringIsSurrogateHighCharacter(c) && i + 1 < n) {
+            unichar low = [text characterAtIndex:i + 1];
+            if (CFStringIsSurrogateLowCharacter(low)) {
+                cp = CFStringGetLongCharacterForSurrogatePair(c, low);
+                len = 2;
+            }
+        }
+        if (TWCodePointHasNoGlyph(cp)) {
+            if (!out) out = [[text substringToIndex:i] mutableCopy];
+            [dropped addObject:[NSValue valueWithRange:NSMakeRange(i, len)]];
+        } else if (out) {
+            [out appendString:[text substringWithRange:NSMakeRange(i, len)]];
+        }
+        i += len - 1;
+    }
+    if (!out) return text;
+    // (an emoji between two words leaves a double space behind)
+    while ([out rangeOfString:@"  "].location != NSNotFound) [out replaceOccurrencesOfString:@"  " withString:@" " options:0 range:NSMakeRange(0, out.length)];
+    return [out stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
+}
+
 #pragma mark - Encoding
 
 + (NSString *)urlEncode:(NSString *)string

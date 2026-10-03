@@ -1,5 +1,24 @@
 #import "TWChatMessage.h"
+#import "TWUtils.h"
 #import "TWCommon.h"
+
+// Leaves out the emoji this system cannot draw; the emote positions move along with the text
+static void TWCleanMessageText(TWChatMessage *m)
+{
+    m.systemText = [TWUtils displayText:m.systemText];
+    NSMutableArray *dropped = [NSMutableArray array];
+    NSString *clean = [TWUtils displayText:m.text dropped:dropped];
+    if (!dropped.count) return;
+    for (TWChatEmoteRange *r in m.emotes) {
+        NSUInteger shift = 0;
+        for (NSValue *v in dropped) {
+            NSRange d = [v rangeValue];
+            if (d.location < r.range.location) shift += d.length;
+        }
+        r.range = NSMakeRange(r.range.location - MIN(shift, r.range.location), r.range.length);
+    }
+    m.text = clean;
+}
 
 #pragma mark - IRC line
 
@@ -209,6 +228,7 @@ static NSArray *TWParseBadgesTag(NSString *tag)
             }
         }
     }
+    TWCleanMessageText(m);
     if (userNotice && !m.text.length && !m.systemText.length) return nil;   // (nothing to show)
     return m;
 }
@@ -253,6 +273,7 @@ static NSArray *TWParseBadgesTag(NSString *tag)
     }
     m.text = text;
     m.emotes = emotes;
+    TWCleanMessageText(m);
     if (!m.login.length) return nil;
     return m;
 }

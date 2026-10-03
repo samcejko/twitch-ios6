@@ -249,6 +249,14 @@ static BOOL TWPressView(UIView *v, NSString *text)
         if (n >= 0 && n < 5) self.rootViewController.selectedIndex = (NSUInteger)n;
         return YES;
     }
+    if ([target isEqualToString:@"back"]) {
+        // (the back button of a navigation bar is no UIButton on iOS 6, so press?title= cannot reach it)
+        UIViewController *top = [TWNavigator presenterFrom:nil];
+        if ([top isKindOfClass:[UITabBarController class]]) top = [(UITabBarController *)top selectedViewController];
+        UINavigationController *nav = [top isKindOfClass:[UINavigationController class]] ? (UINavigationController *)top : top.navigationController;
+        TWLog(@"Back: %@", [nav popViewControllerAnimated:YES] ? @"popped" : @"nothing to pop");
+        return YES;
+    }
     return YES;
 }
 

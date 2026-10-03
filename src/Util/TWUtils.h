@@ -11,6 +11,10 @@
 + (NSString *)formatRelativeDate:(NSDate *)date;            // "2 hours ago", "3 days ago", else a short date
 + (NSString *)formatFileSize:(unsigned long long)bytes;
 + (NSString *)truncate:(NSString *)string to:(NSUInteger)length;
+// The text without the emoji this system has no picture for (they came after 2012 and would show as empty boxes).
+// `dropped` (may be nil) receives the range of every character left out, in the original string's UTF-16 units.
++ (NSString *)displayText:(NSString *)text;
++ (NSString *)displayText:(NSString *)text dropped:(NSMutableArray *)dropped;
 
 // Encoding
 + (NSString *)urlEncode:(NSString *)string;                 // RFC 3986 unreserved characters stay
