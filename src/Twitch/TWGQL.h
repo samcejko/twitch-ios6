@@ -39,6 +39,7 @@ extern NSString * const TWVideoTypeUpload;
 + (TWHTTPTask *)videosForChannel:(NSString *)login type:(NSString *)type after:(NSString *)cursor completion:(TWListCompletion)completion;
 + (TWHTTPTask *)clipsForChannel:(NSString *)login period:(NSString *)period after:(NSString *)cursor completion:(TWListCompletion)completion;
 + (TWHTTPTask *)video:(NSString *)videoId completion:(void (^)(TWVideo *video, NSError *error))completion;
++ (TWHTTPTask *)clip:(NSString *)slug completion:(void (^)(TWClip *clip, NSError *error))completion;
 
 // Playback
 + (TWHTTPTask *)streamAccessToken:(NSString *)login completion:(void (^)(NSString *token, NSString *signature, NSError *error))completion;

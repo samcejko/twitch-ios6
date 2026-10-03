@@ -228,7 +228,11 @@ typedef NS_ENUM(NSInteger, TWChannelTab) {
         self.header.frame = CGRectMake(0, 0, w, y);
         self.tableView.tableHeaderView = self.header;   // (the table reads the height when the view is set)
     }
-    self.segmentBar.frame = CGRectMake(0, 0, w, 44);
+    // (the table places its section header; only the size is ours. Resetting the origin would leave the bar drawn
+    // over the banner until the next scroll, which happened after closing the player.)
+    CGRect barFrame = self.segmentBar.frame;
+    barFrame.size = CGSizeMake(w, 44);
+    self.segmentBar.frame = barFrame;
     CGFloat segW = MIN(w - 24 - (self.periodButton.hidden ? 0 : 100), 360);
     self.segments.frame = CGRectMake(12, 7, segW, 30);
     self.periodButton.frame = CGRectMake(w - 12 - 90, 7, 90, 30);

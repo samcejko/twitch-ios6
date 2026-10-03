@@ -166,7 +166,8 @@ jobs:
           APP=.theos/_/Applications/Twitcher.app
           LDID=$(command -v ldid || find "$THEOS" -type f -name ldid | head -n1)
           echo "ldid: $LDID"
-          "$LDID" -S "$APP/Twitcher"
+          "$LDID" -S"$GITHUB_WORKSPACE/entitlements.xml" "$APP/Twitcher"
+          "$LDID" -e "$APP/Twitcher" | head -n 20
           VERSION=$(grep '^Version:' control | cut -d' ' -f2)
           rm -rf /tmp/ipa && mkdir -p /tmp/ipa/Payload packages
           cp -a "$APP" /tmp/ipa/Payload/

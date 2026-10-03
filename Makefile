@@ -41,4 +41,4 @@ include $(THEOS)/makefiles/application.mk
 TWITCHER_STAGED_BIN := $(THEOS_STAGING_DIR)/Applications/Twitcher.app/Twitcher
 after-stage::
 	install_name_tool -change /System/Library/Frameworks/CFNetwork.framework/CFNetwork /System/Library/Frameworks/Foundation.framework/Foundation "$(TWITCHER_STAGED_BIN)" || true
-	ldid -S "$(TWITCHER_STAGED_BIN)"
+	ldid -S"$(THEOS_PROJECT_DIR)/entitlements.xml" "$(TWITCHER_STAGED_BIN)"

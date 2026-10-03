@@ -85,10 +85,19 @@ static BOOL TWButtonMatches(UIButton *button, NSString *text)
         return YES;
     }
     if ([target hasPrefix:@"clip/"]) {
-        TWClip *clip = [[TWClip alloc] init];
-        clip.slug = [target substringFromIndex:@"clip/".length];
-        clip.title = clip.slug;
-        if (clip.slug.length) [TWNavigator openClip:clip from:self.rootViewController];
+        NSString *slug = [target substringFromIndex:@"clip/".length];
+        if (!slug.length) return YES;
+        __weak TWAppDelegate *weakSelf = self;
+        [TWGQL clip:slug completion:^(TWClip *clip, NSError *error) {
+            if (!clip) {
+                // (the details are for the title only: the clip plays by its slug alone)
+                TWLog(@"Clip %@: %@", slug, error.localizedDescription);
+                clip = [[TWClip alloc] init];
+                clip.slug = slug;
+                clip.title = slug;
+            }
+            [TWNavigator openClip:clip from:weakSelf.rootViewController];
+        }];
         return YES;
     }
     BOOL debug = [[NSFileManager defaultManager] fileExistsAtPath:[[TWUtils documentsPath] stringByAppendingPathComponent:@"debug"]];

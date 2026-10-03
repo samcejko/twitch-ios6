@@ -40,6 +40,7 @@ $variables = @{
     TWQueryStreamToken   = @{ login = $Channel }
     TWQueryVideoToken    = @{ id = $VideoId }
     TWQueryClip          = @{ slug = $ClipSlug }
+    TWQueryClipInfo      = @{ slug = $ClipSlug }
     TWQueryGlobalBadges  = @{}
     TWQueryChannelBadges = @{ login = $Channel }
     TWQueryComments      = @{ id = $VideoId; offset = 600 }

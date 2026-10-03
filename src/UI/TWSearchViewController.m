@@ -47,6 +47,7 @@ typedef NS_ENUM(NSInteger, TWSearchSection) {
     [super viewDidLoad];
     [self.tableView registerClass:[TWChannelCell class] forCellReuseIdentifier:[TWChannelCell reuseIdentifier]];
     self.tableView.rowHeight = [TWChannelCell height];
+    self.tableView.tableFooterView = [[UIView alloc] initWithFrame:CGRectZero];   // (no separator lines below the last row)
     self.searchBar = [[UISearchBar alloc] initWithFrame:CGRectMake(0, 0, self.view.bounds.size.width, 44)];
     self.searchBar.delegate = self;
     self.searchBar.placeholder = L(@"Channels and categories");

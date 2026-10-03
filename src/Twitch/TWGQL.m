@@ -64,6 +64,9 @@ static NSString * const TWQueryVideoToken =
 static NSString * const TWQueryClip =
     @"query($slug: ID!) { clip(slug: $slug) { id slug playbackAccessToken(" TW_PLAYER_PARAMS @") { signature value } videoQualities { frameRate quality sourceURL } } }";
 
+static NSString * const TWQueryClipInfo =
+    @"query($slug: ID!) { clip(slug: $slug) { " TW_CLIP_FIELDS @" } }";
+
 static NSString * const TWQueryGlobalBadges =
     @"query { badges { setID version imageURL(size: NORMAL) } }";
 
@@ -286,6 +289,16 @@ static NSString *TWNextCursor(NSDictionary *connection)
         TWVideo *video = [TWVideo videoFromGQL:TWDict(data[@"video"])];
         if (!video) { completion(nil, TWMakeError(TWErrorAPI, L(@"This video does not exist any more."))); return; }
         completion(video, nil);
+    }];
+}
+
++ (TWHTTPTask *)clip:(NSString *)slug completion:(void (^)(TWClip *clip, NSError *error))completion
+{
+    return [self query:TWQueryClipInfo variables:@{ @"slug": slug ?: @"" } completion:^(NSDictionary *data, NSError *error) {
+        if (error) { completion(nil, error); return; }
+        TWClip *clip = [TWClip clipFromGQL:TWDict(data[@"clip"])];
+        if (!clip) { completion(nil, TWMakeError(TWErrorAPI, L(@"This clip is not available any more."))); return; }
+        completion(clip, nil);
     }];
 }
 

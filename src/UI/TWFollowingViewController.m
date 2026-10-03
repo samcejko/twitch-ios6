@@ -57,6 +57,7 @@ typedef NS_ENUM(NSInteger, TWFollowSection) {
     [super viewDidLoad];
     [self.tableView registerClass:[TWChannelCell class] forCellReuseIdentifier:[TWChannelCell reuseIdentifier]];
     self.tableView.rowHeight = [TWChannelCell height];
+    self.tableView.tableFooterView = [[UIView alloc] initWithFrame:CGRectZero];   // (no separator lines below the last row)
     self.refreshControl = [[UIRefreshControl alloc] init];
     [self.refreshControl addTarget:self action:@selector(reload) forControlEvents:UIControlEventValueChanged];
     self.navigationItem.leftBarButtonItem = self.editButtonItem;
