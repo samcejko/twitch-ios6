@@ -3,6 +3,7 @@
 #import "TWNavigator.h"
 #import "TWTheme.h"
 #import "TWUtils.h"
+#import "TWModern.h"
 #import "TWCommon.h"
 
 static NSString * const kFooterId = @"footer";
@@ -324,7 +325,8 @@ static NSString * const kFooterId = @"footer";
 - (CGFloat)itemWidth
 {
     NSInteger columns = [self columns];
-    CGFloat width = self.view.bounds.size.width;
+    UIEdgeInsets safe = TWSafeAreaInsets(self.view);   // the notch's sides in landscape (iOS 11+)
+    CGFloat width = self.view.bounds.size.width - safe.left - safe.right;
     CGFloat inset = (self.kind == TWGridKindGames) ? 6 : ([self usesCards] ? 8 : 0);
     CGFloat spacing = (self.kind == TWGridKindGames) ? 4 : ([self usesCards] ? 8 : 0);
     return floor((width - 2 * inset - (columns - 1) * spacing) / columns);
@@ -340,8 +342,9 @@ static NSString * const kFooterId = @"footer";
 
 - (UIEdgeInsets)collectionView:(UICollectionView *)collectionView layout:(UICollectionViewLayout *)layout insetForSectionAtIndex:(NSInteger)section
 {
-    if (self.kind == TWGridKindGames) return UIEdgeInsetsMake(8, 6, 8, 6);
-    return [self usesCards] ? UIEdgeInsetsMake(8, 8, 8, 8) : UIEdgeInsetsMake(0, 0, 0, 0);
+    UIEdgeInsets safe = TWSafeAreaInsets(self.view);
+    if (self.kind == TWGridKindGames) return UIEdgeInsetsMake(8, 6 + safe.left, 8, 6 + safe.right);
+    return [self usesCards] ? UIEdgeInsetsMake(8, 8 + safe.left, 8, 8 + safe.right) : UIEdgeInsetsMake(0, safe.left, 0, safe.right);
 }
 
 - (CGFloat)collectionView:(UICollectionView *)collectionView layout:(UICollectionViewLayout *)layout minimumInteritemSpacingForSectionAtIndex:(NSInteger)section

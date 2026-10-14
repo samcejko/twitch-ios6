@@ -14,6 +14,7 @@
 #import "TWSettings.h"
 #import "TWTheme.h"
 #import "TWUtils.h"
+#import "TWModern.h"
 #import "TWCommon.h"
 #import <AVFoundation/AVFoundation.h>
 #import <MediaPlayer/MPNowPlayingInfoCenter.h>
@@ -67,6 +68,7 @@ static const NSTimeInterval TWLivePauseReloadAfter = 40;   // paused this long: 
 @property (nonatomic, strong) TWChatView *chatView;
 @property (nonatomic) BOOL fullscreen;
 @property (nonatomic) BOOL chatVisible;
+@property (nonatomic) BOOL statusBarHiddenByPlayer;   // full screen, or an iPhone turned sideways
 // chat
 @property (nonatomic, strong) TWIRC *irc;
 @property (nonatomic, strong) NSMutableDictionary *awaitingEcho;   // message id -> text (sent, echo not yet seen)
@@ -204,38 +206,63 @@ static const NSTimeInterval TWLivePauseReloadAfter = 40;   // paused this long: 
     return YES;
 }
 
+- (BOOL)wantsStatusBarHiddenInOrientation:(UIInterfaceOrientation)orientation
+{
+    return self.fullscreen || (!TWIsPad() && UIInterfaceOrientationIsLandscape(orientation));
+}
+
+// The room the controls leave at the top: the status bar (20 on iOS 6), or the notch on iOS 11+ (also when the
+// status bar is hidden)
+- (CGFloat)currentTopInset
+{
+    return TWModernTopInset(self.view, self.statusBarHiddenByPlayer ? 0 : 20);
+}
+
 - (void)updateStatusBar
 {
     UIApplication *app = [UIApplication sharedApplication];
-    BOOL hide = self.fullscreen || (!TWIsPad() && UIInterfaceOrientationIsLandscape(self.interfaceOrientation));
+    BOOL hide = [self wantsStatusBarHiddenInOrientation:self.interfaceOrientation];
+    self.statusBarHiddenByPlayer = hide;
     [app setStatusBarHidden:hide withAnimation:UIStatusBarAnimationFade];
     if (!hide) [app setStatusBarStyle:UIStatusBarStyleBlackOpaque animated:NO];
-    self.playerView.topInset = hide ? 0 : 20;
+    TWModernStatusBarChanged(self);   // iOS 7+ asks prefersStatusBarHidden instead
+    self.playerView.topInset = [self currentTopInset];
     [self.view setNeedsLayout];
 }
+
+// iOS 7 and newer (never called on iOS 6)
+- (BOOL)prefersStatusBarHidden { return self.statusBarHiddenByPlayer; }
+- (UIStatusBarStyle)preferredStatusBarStyle { return TWModernStatusBarStyle(UIStatusBarStyleBlackOpaque); }
 
 - (void)viewWillLayoutSubviews
 {
     [super viewWillLayoutSubviews];
     CGRect b = self.view.bounds;
+    UIEdgeInsets safe = TWSafeAreaInsets(self.view);   // the notch and the home indicator (iOS 11+), else zero
+    self.playerView.topInset = [self currentTopInset];
     BOOL showChat = self.chatVisible && self.chatView && !self.fullscreen;
     self.chatView.hidden = !showChat;
     if (!showChat) {
         self.playerView.frame = b;
+        self.playerView.safeInsets = UIEdgeInsetsMake(0, safe.left, safe.bottom, safe.right);
         return;
     }
     BOOL landscape = b.size.width > b.size.height;
     if (landscape) {
-        CGFloat chatW = TWIsPad() ? 340 : 190;
+        CGFloat chatW = (TWIsPad() ? 340 : 190) + safe.right;
         CGFloat top = self.playerView.topInset;   // (the status bar, when it shows)
         self.playerView.frame = CGRectMake(0, 0, b.size.width - chatW, b.size.height);
+        self.playerView.safeInsets = UIEdgeInsetsMake(0, safe.left, safe.bottom, 0);
         self.chatView.frame = CGRectMake(b.size.width - chatW, top, chatW, b.size.height - top);
+        self.chatView.safeInsets = UIEdgeInsetsMake(0, 0, safe.bottom, safe.right);
     } else {
         CGFloat top = self.playerView.topInset;
         CGFloat videoH = floor(b.size.width * 9.0 / 16.0) + top;
         if (TWIsPad()) videoH = MAX(videoH, floor(b.size.height * 0.5));
         self.playerView.frame = CGRectMake(0, 0, b.size.width, videoH);
+        self.playerView.safeInsets = UIEdgeInsetsMake(0, safe.left, 0, safe.right);
         self.chatView.frame = CGRectMake(0, videoH, b.size.width, b.size.height - videoH);
+        self.chatView.safeInsets = UIEdgeInsetsMake(0, safe.left, safe.bottom, safe.right);
     }
 }
 
@@ -243,9 +270,11 @@ static const NSTimeInterval TWLivePauseReloadAfter = 40;   // paused this long: 
 {
     [super willAnimateRotationToInterfaceOrientation:toInterfaceOrientation duration:duration];
     UIApplication *app = [UIApplication sharedApplication];
-    BOOL hide = self.fullscreen || (!TWIsPad() && UIInterfaceOrientationIsLandscape(toInterfaceOrientation));
+    BOOL hide = [self wantsStatusBarHiddenInOrientation:toInterfaceOrientation];
+    self.statusBarHiddenByPlayer = hide;
     [app setStatusBarHidden:hide withAnimation:UIStatusBarAnimationNone];
-    self.playerView.topInset = hide ? 0 : 20;
+    TWModernStatusBarChanged(self);
+    self.playerView.topInset = [self currentTopInset];
     [self.view setNeedsLayout];
     [self.view layoutIfNeeded];
 }

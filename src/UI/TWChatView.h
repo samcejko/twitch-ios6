@@ -31,6 +31,7 @@
 @property (nonatomic) BOOL canSend;                   // shows the input bar
 @property (nonatomic, readonly) BOOL keyboardVisible;
 @property (nonatomic) BOOL replayMode;                // a video's chat: timestamps are offsets, no input
+@property (nonatomic) UIEdgeInsets safeInsets;        // the home indicator (bottom) and the notch (left/right) on iOS 11+, else zero
 
 - (void)appendMessages:(NSArray *)messages;           // TWChatMessage
 - (void)appendNotice:(NSString *)text;

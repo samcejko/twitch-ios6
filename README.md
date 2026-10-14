@@ -1,9 +1,10 @@
 # Twitcher – Twitch for iOS 6
 
-Universal (iPhone + iPad) Twitch client for **jailbroken iOS 6.x** devices (armv7, e.g. iPad 2).
-Live streams with chat, past broadcasts with the chat replay, clips, categories, search, favourites – and an
-optional Twitch login for the channels you follow and for writing in the chat. Drawn in the glossy iOS 6 look,
-light and dark, English and Czech.
+Universal (iPhone + iPad) Twitch client for **jailbroken iOS 6.x** devices (armv7, e.g. iPad 2), with a second
+build for **64-bit devices with iOS 14–17** (iPhone X and newer: rootless jailbreaks and TrollStore) that keeps
+the same look. Live streams with chat, past broadcasts with the chat replay, clips, categories, search, favourites
+– and an optional Twitch login for the channels you follow and for writing in the chat. Drawn in the glossy iOS 6
+look, light and dark, English and Czech.
 
 Why it is special: Twitch's servers only speak today's TLS, which the iOS 6 networking stack cannot negotiate.
 The app ships its own TLS stack (Mbed TLS) and a tiny HTTP client, and the video goes to the system player
@@ -24,7 +25,8 @@ to Twitch (and, for third-party emotes, to BetterTTV, FrankerFaceZ and 7TV).
   sending chat messages, your own emotes in the picker
 - Light and dark theme, English and Czech
 
-Tested on an iPad 2 (iPad2,2) with iOS 6.1.3. The iPhone layout is implemented but has not been tried on a real iPhone yet.
+Tested on an iPad 2 (iPad2,2) with iOS 6.1.3. The iPhone layout is implemented but has not been tried on a real iPhone yet;
+the 64-bit build has not been tried on a device yet either.
 
 ## Logging in
 
@@ -48,18 +50,30 @@ at [ko-fi.com/samcejko](https://ko-fi.com/samcejko). By hand:
    The `.deb` works too (`dpkg -i`, then `su mobile -c uicache`) and installs into `/Applications`; do not keep
    both installed at once.
 
+On iOS 14–17 (64-bit): with a rootless jailbreak add the same repository in Sileo or Zebra, or install the
+`iphoneos-arm64` `.deb` with `dpkg -i` (it goes into `/var/jb/Applications`); without a jailbreak open
+`Twitcher-<version>-arm64.ipa` in [TrollStore](https://github.com/opa334/TrollStore). The same app, the same iOS 6 look.
+
 `tools/gh-release.ps1 -RunDir packages\run-<id> -Sha <commit>` publishes a release from a downloaded CI run.
 
 ## Building (GitHub Actions)
 
-No Mac needed. Every push runs `.github/workflows/build.yml` on Ubuntu with Theos, the iOS 9.3 SDK
-(deployment target 6.0) and Mbed TLS. Artifacts: `Twitcher-<version>.ipa` and a `.deb`.
+No Mac needed. Every push runs `.github/workflows/build.yml` on Ubuntu with Theos and Mbed TLS, twice from the
+same sources:
+
+- `ios6-armv7`: the iOS 9.3 SDK, deployment target 6.0 → `Twitcher-<version>.ipa` and the `iphoneos-arm` `.deb`;
+- `ios14-arm64`: `make package THEOS_PACKAGE_SCHEME=rootless`, the iOS 16.5 SDK, deployment target 14.0 →
+  `Twitcher-<version>-arm64.ipa` (TrollStore) and the `iphoneos-arm64` `.deb` (rootless, `/var/jb`).
+
+The differences live in `src/Util/TWModern.m` (safe areas, the iOS 6 look of the bars on iOS 7 and newer,
+full-screen modals) and in `tools/modern_bundle.py` (the arm64 bundle's Info.plist and launch screen).
 
 Local helpers (Windows PowerShell, no git required; settings in `tools/local.json`):
 
 ```powershell
 .\tools\gh-push.ps1 -Message "change"                   # push via REST API
-.\tools\gh-build.ps1 -Download -Install                 # wait, fetch, install over SSH
+.\tools\gh-build.ps1 -Download -Install                 # wait, fetch both builds, install on the iPad
+.\tools\gh-build.ps1 -Download -InstallIPhone           # ... or the arm64 .deb on the iPhone (tools/iphone.ps1)
 .\tools\check-gql.ps1                                   # run every GraphQL query against the live API
 . .\tools\ipad.ps1; Get-IPadCrashLogs; Get-IPadSyslog   # debugging
 ```

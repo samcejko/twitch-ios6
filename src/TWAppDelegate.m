@@ -10,6 +10,7 @@
 #import "TWSettings.h"
 #import "TWTheme.h"
 #import "TWUtils.h"
+#import "TWModern.h"
 #import "TWCommon.h"
 #include <dlfcn.h>
 #include <signal.h>
@@ -98,6 +99,8 @@ static BOOL TWPressView(UIView *v, NSString *text)
     signal(SIGPIPE, SIG_IGN);
     [TWSettings registerDefaults];
     TWLog(@"Twitcher %@ starting on %@ (iOS %@)", [TWUtils appVersion], [TWUtils deviceModel], [UIDevice currentDevice].systemVersion);
+    // iOS 7 and newer (the arm64 build): the iOS 6 look of the bars, full-screen modals; nothing on iOS 6
+    TWModernSetUp([[TWTheme shared] barStyle]);
     [TWTLSSocket warmUp];
     [[TWImageLoader shared] pruneDisk];
     [TWImageLoader shared].animationAllowed = [TWSettings animatedEmotes];

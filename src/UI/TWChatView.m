@@ -288,6 +288,13 @@ static const CGFloat TWChatInputHeight = 44;
     self.style = nil;
 }
 
+- (void)setSafeInsets:(UIEdgeInsets)safeInsets
+{
+    if (UIEdgeInsetsEqualToEdgeInsets(safeInsets, _safeInsets)) return;
+    _safeInsets = safeInsets;
+    [self setNeedsLayout];
+}
+
 - (void)setCanSend:(BOOL)canSend
 {
     _canSend = canSend;
@@ -311,24 +318,27 @@ static const CGFloat TWChatInputHeight = 44;
     [super layoutSubviews];
     CGRect b = self.bounds;
     BOOL input = self.canSend && !self.replayMode;
-    // (the emote picker takes the keyboard's place: its height arrives through the keyboard notifications)
-    CGFloat bottomInset = self.keyboardOverlap;
+    // (the emote picker takes the keyboard's place: its height arrives through the keyboard notifications; with
+    // no keyboard the home indicator of iOS 11+ stays free, the input bar's background still covers it)
+    CGFloat left = self.safeInsets.left, right = self.safeInsets.right;
+    CGFloat homeInset = self.keyboardOverlap > 0 ? 0 : self.safeInsets.bottom;
+    CGFloat bottomInset = self.keyboardOverlap + homeInset;
     CGFloat inputH = input ? TWChatInputHeight : 0;
     CGFloat tableH = b.size.height - inputH - bottomInset;
-    CGRect tableFrame = CGRectMake(0, 0, b.size.width, MAX(tableH, 0));
+    CGRect tableFrame = CGRectMake(left, 0, b.size.width - left - right, MAX(tableH, 0));
     BOOL widthChanged = fabs(self.tableView.frame.size.width - tableFrame.size.width) > 0.5;
     if (!CGRectEqualToRect(self.tableView.frame, tableFrame)) self.tableView.frame = tableFrame;
     if (widthChanged) [self invalidateLayouts];
     CGFloat y = CGRectGetMaxY(tableFrame);
-    self.inputBackground.frame = CGRectMake(0, y, b.size.width, inputH);
-    self.emoteButton.frame = CGRectMake(4, y + 7, 30, 30);
+    self.inputBackground.frame = CGRectMake(0, y, b.size.width, input ? inputH + homeInset : 0);
+    self.emoteButton.frame = CGRectMake(left + 4, y + 7, 30, 30);
     CGFloat sendW = 58;
-    self.sendButton.frame = CGRectMake(b.size.width - 6 - sendW, y + 7, sendW, 30);
-    CGFloat fieldX = 38;
-    self.fieldBackground.frame = CGRectMake(fieldX, y + 7, b.size.width - fieldX - sendW - 12, 30);
+    self.sendButton.frame = CGRectMake(b.size.width - right - 6 - sendW, y + 7, sendW, 30);
+    CGFloat fieldX = left + 38;
+    self.fieldBackground.frame = CGRectMake(fieldX, y + 7, b.size.width - right - fieldX - sendW - 12, 30);
     self.field.frame = CGRectInset(self.fieldBackground.frame, 8, 0);
     CGSize pill = [self.moreMessagesButton.currentTitle sizeWithFont:self.moreMessagesButton.titleLabel.font];
-    self.moreMessagesButton.frame = CGRectMake(floor((b.size.width - pill.width - 24) / 2), CGRectGetMaxY(tableFrame) - 32, pill.width + 24, 24);
+    self.moreMessagesButton.frame = CGRectMake(left + floor((tableFrame.size.width - pill.width - 24) / 2), CGRectGetMaxY(tableFrame) - 32, pill.width + 24, 24);
 }
 
 #pragma mark - Messages
