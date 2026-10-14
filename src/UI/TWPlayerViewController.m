@@ -1122,6 +1122,7 @@ static const NSTimeInterval TWLivePauseReloadAfter = 40;   // paused this long: 
     UIViewController *presenter = self.presentingViewController;
     [self teardownPlayback];
     [self dismissViewControllerAnimated:NO completion:^{
+        player.modalPresentationStyle = UIModalPresentationFullScreen;   // (iOS 13 and newer would present a card)
         player.modalTransitionStyle = UIModalTransitionStyleCrossDissolve;
         [presenter presentViewController:player animated:YES completion:nil];
     }];

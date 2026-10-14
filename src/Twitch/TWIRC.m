@@ -166,6 +166,10 @@ static const NSUInteger TWIRCBatchMax = 40;
     BOOL joined = NO, pinged = NO, ok = YES;
     unsigned char chunk[16384];
     [socket setReadTimeoutMs:20000];
+    // Why the error is kept here and handed out only after the loop: an object stored into `*error` inside the
+    // loop's autorelease pool is autoreleased into that pool, and the pool ends with every turn of the loop - the
+    // caller would get a dangling pointer (iOS 16 crashed on it in objc_retain; iOS 6 merely got lucky).
+    NSError *failure = nil;
 
     while (ok && generation == self.generation) {
         @autoreleasepool {
@@ -181,18 +185,18 @@ static const NSUInteger TWIRCBatchMax = 40;
                 if (_outgoing.count) { pending = [_outgoing copy]; [_outgoing removeAllObjects]; }
             }
             for (NSString *line in pending) {
-                if (![socket writeData:[[line stringByAppendingString:@"\r\n"] dataUsingEncoding:NSUTF8StringEncoding] error:error]) { ok = NO; break; }
+                if (![socket writeData:[[line stringByAppendingString:@"\r\n"] dataUsingEncoding:NSUTF8StringEncoding] error:&failure]) { ok = NO; break; }
             }
             if (!ok) break;
             // silence from the server: our own ping, then a new connection
             if (now - lastReceived > TWIRCIdleGiveUp) {
-                if (error) *error = TWMakeError(TWErrorTimeout, @"No data from the chat server");
+                failure = TWMakeError(TWErrorTimeout, @"No data from the chat server");
                 ok = NO;
                 break;
             }
             if (now - lastReceived > TWIRCIdlePing && !pinged) {
                 pinged = YES;
-                if (![socket writeData:[@"PING :keepalive\r\n" dataUsingEncoding:NSUTF8StringEncoding] error:error]) { ok = NO; break; }
+                if (![socket writeData:[@"PING :keepalive\r\n" dataUsingEncoding:NSUTF8StringEncoding] error:&failure]) { ok = NO; break; }
             }
             // wait for data, a wake-up, or the batch deadline
             BOOL readable = [socket hasBufferedData];
@@ -202,7 +206,7 @@ static const NSUInteger TWIRCBatchMax = 40;
                 int r = poll(fds, _wakePipe[0] >= 0 ? 2 : 1, timeout);
                 if (r < 0) {
                     if (errno == EINTR) continue;
-                    if (error) *error = TWMakeError(TWErrorConnectionLost, @"poll failed");
+                    failure = TWMakeError(TWErrorConnectionLost, @"poll failed");
                     ok = NO;
                     break;
                 }
@@ -213,7 +217,7 @@ static const NSUInteger TWIRCBatchMax = 40;
                     continue;
                 }
                 if (fds[0].revents & (POLLERR | POLLHUP | POLLNVAL)) {
-                    if (error) *error = TWMakeError(TWErrorConnectionLost, L(@"Connection lost."));
+                    failure = TWMakeError(TWErrorConnectionLost, L(@"Connection lost."));
                     ok = NO;
                     break;
                 }
@@ -222,13 +226,13 @@ static const NSUInteger TWIRCBatchMax = 40;
             NSError *readError = nil;
             NSInteger n = [socket readIntoBuffer:chunk maxLength:sizeof(chunk) error:&readError];
             if (n == 0) {
-                if (error) *error = TWMakeError(TWErrorConnectionLost, L(@"The chat server closed the connection."));
+                failure = TWMakeError(TWErrorConnectionLost, L(@"The chat server closed the connection."));
                 ok = NO;
                 break;
             }
             if (n < 0) {
                 if (readError.code == TWErrorTimeout) continue;   // (a record that did not complete in time: the poll loop goes on)
-                if (error) *error = readError;
+                failure = readError;
                 ok = NO;
                 break;
             }
@@ -247,7 +251,7 @@ static const NSUInteger TWIRCBatchMax = 40;
                 if (!line.length) continue;
                 if ([line hasPrefix:@"PING"]) {
                     NSString *pong = [@"PONG" stringByAppendingString:[line substringFromIndex:4]];
-                    if (![socket writeData:[[pong stringByAppendingString:@"\r\n"] dataUsingEncoding:NSUTF8StringEncoding] error:error]) { ok = NO; break; }
+                    if (![socket writeData:[[pong stringByAppendingString:@"\r\n"] dataUsingEncoding:NSUTF8StringEncoding] error:&failure]) { ok = NO; break; }
                     continue;
                 }
                 TWIRCLine *parsed = [TWIRCLine lineWithString:line];
@@ -266,7 +270,7 @@ static const NSUInteger TWIRCBatchMax = 40;
                 } else if ([command isEqualToString:@"NOTICE"]) {
                     NSString *text = parsed.trailing;
                     if ([text rangeOfString:@"Login authentication failed"].location != NSNotFound || [text rangeOfString:@"Improperly formatted auth"].location != NSNotFound) {
-                        if (error) *error = TWMakeError(TWErrorAuth, text);
+                        failure = TWMakeError(TWErrorAuth, text);
                         ok = NO;
                         break;
                     }
@@ -292,7 +296,7 @@ static const NSUInteger TWIRCBatchMax = 40;
                         });
                     }
                 } else if ([command isEqualToString:@"RECONNECT"]) {
-                    if (error) *error = TWMakeError(TWErrorConnectionLost, @"The server asked for a new connection");
+                    failure = TWMakeError(TWErrorConnectionLost, @"The server asked for a new connection");
                     ok = NO;
                     break;
                 }
@@ -301,6 +305,7 @@ static const NSUInteger TWIRCBatchMax = 40;
             if (buffer.length > 1024 * 1024) [buffer setLength:0];   // (a line that never ends: not IRC)
         }
     }
+    if (!ok && error) *error = failure;
     if (batch.count) [self deliver:[batch copy]];
     [socket close];
     self.socket = nil;
