@@ -702,6 +702,7 @@ static UIImage *TWDrawImage(CGSize size, void (^draw)(CGContextRef ctx))
     tableView.backgroundColor = tableView.style != UITableViewStylePlain ? [self backgroundColor] : [self cardColor];
     tableView.separatorColor = [self separatorColor];
     tableView.indicatorStyle = self.dark ? UIScrollViewIndicatorStyleWhite : UIScrollViewIndicatorStyleDefault;
+    TWModernSetTableViewDark(tableView, [self isDark]);
 }
 
 - (void)styleCell:(UITableViewCell *)cell
