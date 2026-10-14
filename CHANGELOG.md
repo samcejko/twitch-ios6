@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.2 (2026-10-14)
+
+- Settings → About has a "Support the development" row that opens the author's Ko-fi page. The app stays free.
+- Twitcher is in the Cydia repository `http://samcejko.eu/repo/` now: add it as a source in Cydia to get updates.
+
 ## 0.1.1 (2026-10-03)
 
 - Links (chat, the login's activation page) now open through an "Open in..." chooser offering Safari and, when it is

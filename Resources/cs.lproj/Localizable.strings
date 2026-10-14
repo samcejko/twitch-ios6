@@ -223,6 +223,7 @@
 "Author" = "Autor";
 "Root certificates" = "Kořenové certifikáty";
 "Device" = "Zařízení";
+"Support the development" = "Podpořit vývoj";
 "The player picks what the connection allows, up to what the device decodes." = "Přehrávač volí podle připojení, až po to, co zařízení zvládne.";
 "The streamer's own quality, when the device can decode it." = "Kvalita, v jaké streamer vysílá, pokud ji zařízení zvládne.";
 "Just the sound, for the background." = "Jen zvuk, na pozadí.";

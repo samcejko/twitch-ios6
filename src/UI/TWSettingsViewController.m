@@ -1,6 +1,7 @@
 #import "TWSettingsViewController.h"
 #import "TWChoiceViewController.h"
 #import "TWLoginViewController.h"
+#import "TWExternalOpen.h"
 #import "TWAuth.h"
 #import "TWSettings.h"
 #import "TWTheme.h"
@@ -128,7 +129,7 @@ typedef NS_ENUM(NSInteger, TWSettingsSection) {
         case TWSectionChat: return 6;
         case TWSectionAppearance: return 1;
         case TWSectionAdvanced: return 3;
-        case TWSectionAbout: return 4;
+        case TWSectionAbout: return 5;
         default: return 0;
     }
 }
@@ -258,9 +259,14 @@ typedef NS_ENUM(NSInteger, TWSettingsSection) {
             } else if (row == 2) {
                 cell.textLabel.text = L(@"Root certificates");
                 cell.detailTextLabel.text = [NSString stringWithFormat:@"%ld", (long)[TWTLSSocket caCertificateCount]];
-            } else {
+            } else if (row == 3) {
                 cell.textLabel.text = L(@"Device");
                 cell.detailTextLabel.text = [NSString stringWithFormat:@"%@ · iOS %@", [TWUtils deviceModel], [UIDevice currentDevice].systemVersion];
+            } else {
+                cell.textLabel.text = L(@"Support the development");
+                cell.detailTextLabel.text = @"ko-fi.com/samcejko";
+                cell.accessoryType = UITableViewCellAccessoryDisclosureIndicator;
+                cell.selectionStyle = UITableViewCellSelectionStyleBlue;
             }
             break;
         default:
@@ -338,6 +344,8 @@ typedef NS_ENUM(NSInteger, TWSettingsSection) {
         }];
     } else if (sec == TWSectionAdvanced && row == 2) {
         [self runConnectionTest];
+    } else if (sec == TWSectionAbout && row == 4) {
+        [TWExternalOpen presentOpenInForURL:[NSURL URLWithString:@"https://ko-fi.com/samcejko"] from:self anchor:[tableView cellForRowAtIndexPath:indexPath]];
     }
 }
 

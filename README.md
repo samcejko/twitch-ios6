@@ -36,6 +36,10 @@ application "Samcejko iOS6 Client" (a *Public* client, so there is no secret), w
 
 ## Installing on the device
 
+The easy way: add the Cydia repository `http://samcejko.eu/repo/` (Cydia → Sources → Edit → Add) and install Twitcher
+from there; updates then come through Cydia. The app is free; if it is useful to you, you can support the development
+at [ko-fi.com/samcejko](https://ko-fi.com/samcejko). By hand:
+
 1. Cydia: **AppSync Unified** (repo `https://cydia.akemi.ai/`) and **IPA Installer Console** (BigBoss),
    plus OpenSSH for the helper scripts.
 2. Download the `.ipa` or `.deb` of the latest [release](https://github.com/samcejko/twitch-ios6/releases)
