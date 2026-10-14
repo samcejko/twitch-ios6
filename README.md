@@ -79,13 +79,18 @@ Local helpers (Windows PowerShell, no git required; settings in `tools/local.jso
 ```
 
 URL scheme (other apps, or `uiopen` over SSH): `twitcher:watch/<channel>` opens a stream, `twitcher:channel/<channel>`
-a channel page, `twitcher:video/<id>` a past broadcast, `twitcher:clip/<slug>` a clip, `twitcher:search?q=<text>` a search.
+a channel page, `twitcher:video/<id>` a past broadcast, `twitcher:clip/<slug>` a clip, `twitcher:search?q=<text>` a search,
+and `twitcher:open?url=<percent-encoded twitch.tv link>` whatever a Twitch link points at (channel, video, clip,
+category). Links in the chat, in titles and in channel descriptions are tappable: Twitch links open in the app, YouTube,
+Kick and TikTok links offer the sister apps Tubie, Kicker and TikTak when they are installed (`tubie:open?url=` and the
+like), other links the browser (on iOS 6 a chooser with Safari and Surfari, newer iOS open Safari directly).
 
 Debugging over SSH: with a file named `debug` in the app's Documents folder (`Enable-TwitcherDebug` in
 `tools/ipad.ps1`), `uiopen twitcher:snapshot` draws the app's windows and `twitcher:screen` grabs the real screen
 (video included) into the app's `tmp/screen.png` (`Get-IPadScreen`), `twitcher:press?n=0` presses a button of the
 alert or sheet on screen, `twitcher:press?title=<text>` a button, segment, switch row or list row with that text,
-`twitcher:tab?n=1` switches tabs, `twitcher:back` pops the navigation stack and `twitcher:stats` logs the memory in
+`twitcher:tab?n=1` switches tabs, `twitcher:back` pops the navigation stack, `twitcher:link?url=<percent-encoded link>`
+does what a tap on that link in a text does (so the chooser can be snapshotted) and `twitcher:stats` logs the memory in
 use. `/var/log/syslog` carries the app's log lines (`[Twitcher]`, `Get-TwitcherLog`).
 
 ## Project layout

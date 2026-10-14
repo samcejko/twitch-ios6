@@ -497,33 +497,35 @@ static const CGFloat TWChatInputHeight = 44;
     CGPoint inLayout = CGPointMake(p.x - TWChatCellPadH, p.y - TWChatCellPadV);
     TWChatLink *link = [cell.layout linkAtPoint:inLayout];
     if (link) {
-        self.tappedLink = link.url;
-        self.tappedMessage = cell.message;
-        UIActionSheet *sheet = [[UIActionSheet alloc] initWithTitle:link.url delegate:self cancelButtonTitle:L(@"Cancel") destructiveButtonTitle:nil otherButtonTitles:L(@"Open Link"), L(@"Copy Link"), nil];
-        sheet.tag = 2;
-        [sheet showInView:self];
+        // a tap opens the link (the player decides where: twitch.tv inside the app, a sister app, the browser);
+        // a long press on it offers to copy it
+        if ([self.delegate respondsToSelector:@selector(chatView:didTapLink:)]) [self.delegate chatView:self didTapLink:link.url];
         return;
     }
     if ([cell.layout isNameAtPoint:inLayout]) {
-        [self showActionsForMessage:cell.message];
+        [self showActionsForMessage:cell.message link:nil];
     }
 }
 
 - (void)tablePressed:(UILongPressGestureRecognizer *)gesture
 {
     if (gesture.state != UIGestureRecognizerStateBegan) return;
-    TWChatCell *cell = [self cellAtGesture:gesture point:NULL];
+    CGPoint p;
+    TWChatCell *cell = [self cellAtGesture:gesture point:&p];
     if (!cell || !cell.message.login.length) return;
-    [self showActionsForMessage:cell.message];
+    TWChatLink *link = [cell.layout linkAtPoint:CGPointMake(p.x - TWChatCellPadH, p.y - TWChatCellPadV)];
+    [self showActionsForMessage:cell.message link:link.url];
 }
 
-- (void)showActionsForMessage:(TWChatMessage *)message
+- (void)showActionsForMessage:(TWChatMessage *)message link:(NSString *)link
 {
     self.tappedMessage = message;
+    self.tappedLink = link;
     UIActionSheet *sheet = [[UIActionSheet alloc] initWithTitle:[message nameForDisplay] delegate:self cancelButtonTitle:nil destructiveButtonTitle:nil otherButtonTitles:nil];
     [sheet addButtonWithTitle:L(@"Open Channel")];
     if (self.canSend && !self.replayMode) [sheet addButtonWithTitle:L(@"Mention")];
     [sheet addButtonWithTitle:L(@"Copy Message")];
+    if (link.length) [sheet addButtonWithTitle:L(@"Copy Link")];
     sheet.cancelButtonIndex = [sheet addButtonWithTitle:L(@"Cancel")];
     sheet.tag = 1;
     [sheet showInView:self];
@@ -534,20 +536,14 @@ static const CGFloat TWChatInputHeight = 44;
     if (buttonIndex < 0 || buttonIndex == actionSheet.cancelButtonIndex) return;
     NSString *title = [actionSheet buttonTitleAtIndex:buttonIndex];
     TWChatMessage *m = self.tappedMessage;
-    if (actionSheet.tag == 2) {
-        if ([title isEqualToString:L(@"Open Link")]) {
-            if ([self.delegate respondsToSelector:@selector(chatView:didTapLink:)]) [self.delegate chatView:self didTapLink:self.tappedLink];
-        } else {
-            [UIPasteboard generalPasteboard].string = self.tappedLink ?: @"";
-        }
-        return;
-    }
     if ([title isEqualToString:L(@"Open Channel")]) {
         if ([self.delegate respondsToSelector:@selector(chatView:didTapName:displayName:)]) [self.delegate chatView:self didTapName:m.login displayName:m.displayName];
     } else if ([title isEqualToString:L(@"Mention")]) {
         [self insertMention:m.displayName ?: m.login];
     } else if ([title isEqualToString:L(@"Copy Message")]) {
         [UIPasteboard generalPasteboard].string = m.text.length ? m.text : (m.systemText ?: @"");
+    } else if ([title isEqualToString:L(@"Copy Link")]) {
+        [UIPasteboard generalPasteboard].string = self.tappedLink ?: @"";
     }
 }
 

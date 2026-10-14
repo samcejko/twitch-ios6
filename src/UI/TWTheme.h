@@ -19,6 +19,7 @@
 - (UIColor *)accentColor;                   // Twitch purple
 - (UIColor *)liveColor;                     // red
 - (UIColor *)linkColor;
+- (UIColor *)linkColorOnDark;               // links over the player's dark controls, whatever the theme
 - (UIColor *)chatBackgroundColor;
 - (UIColor *)chatTextColor;
 - (UIColor *)chatSystemTextColor;

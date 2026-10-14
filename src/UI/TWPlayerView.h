@@ -13,6 +13,8 @@
 - (void)playerView:(TWPlayerView *)view didSeekToFraction:(double)fraction;    // videos and clips
 - (void)playerView:(TWPlayerView *)view didSkipSeconds:(double)seconds;        // -10 / +10
 - (void)playerViewDidTapGoLive:(TWPlayerView *)view;                            // live: back to the live edge
+@optional
+- (void)playerView:(TWPlayerView *)view didTapTitleLinks:(NSArray *)links fromView:(UIView *)anchor;   // the title holds web links (TWTextLink)
 @end
 
 // The video (AVPlayerLayer) with the controls drawn over it: a top bar with the title and the quality, a bottom bar
@@ -30,7 +32,7 @@
 @property (nonatomic) BOOL chatVisible;
 @property (nonatomic) BOOL chatButtonHidden;         // (no chat for clips)
 @property (nonatomic) BOOL closeIsBack;              // a chevron instead of an X (a stack behind this screen)
-@property (nonatomic, copy) NSString *title;
+@property (nonatomic, copy) NSString *title;         // web links in it are coloured; a tap on them asks the delegate
 @property (nonatomic, copy) NSString *subtitle;      // channel · game
 @property (nonatomic, copy) NSString *qualityTitle;
 @property (nonatomic, copy) NSString *statusText;    // viewers · uptime, or the position in a video

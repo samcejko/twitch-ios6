@@ -128,6 +128,7 @@ static UIImage *TWDrawImage(CGSize size, void (^draw)(CGContextRef ctx))
 - (UIColor *)accentColor { return self.dark ? RGB(160, 125, 240) : RGB(100, 65, 165); }
 - (UIColor *)liveColor { return RGB(224, 32, 32); }
 - (UIColor *)linkColor { return self.dark ? RGB(120, 175, 245) : RGB(30, 90, 200); }
+- (UIColor *)linkColorOnDark { return RGB(120, 175, 245); }
 - (UIColor *)chatBackgroundColor { return self.dark ? RGB(24, 24, 27) : RGB(250, 250, 252); }
 - (UIColor *)chatTextColor { return self.dark ? RGB(235, 235, 238) : RGB(28, 28, 32); }
 - (UIColor *)chatSystemTextColor { return self.dark ? RGB(150, 150, 158) : RGB(110, 110, 118); }

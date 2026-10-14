@@ -24,9 +24,9 @@
 	<key>CFBundleSignature</key>
 	<string>????</string>
 	<key>CFBundleShortVersionString</key>
-	<string>0.2.0</string>
+	<string>0.2.1</string>
 	<key>CFBundleVersion</key>
-	<string>4</string>
+	<string>5</string>
 	<key>CFBundleSupportedPlatforms</key>
 	<array>
 		<string>iPhoneOS</string>
@@ -125,10 +125,15 @@
 	<string>Light</string>
 	<key>UIRequiresFullScreen</key>
 	<true/>
-	<!-- iOS 9 and newer answer canOpenURL: only for schemes listed here (the "Open in Surfari" chooser) -->
+	<!-- iOS 9 and newer answer canOpenURL: only for schemes listed here: the sister apps that links are offered to
+	     (Surfari the browser, Tubie for YouTube, Kicker for Kick, TikTak for TikTok - which also answers to tikie) -->
 	<key>LSApplicationQueriesSchemes</key>
 	<array>
 		<string>surfari</string>
+		<string>tubie</string>
+		<string>kicker</string>
+		<string>tiktak</string>
+		<string>tikie</string>
 	</array>
 	<!-- the player loads http://127.0.0.1 from the app's own proxy: never a question for App Transport Security -->
 	<key>NSAppTransportSecurity</key>

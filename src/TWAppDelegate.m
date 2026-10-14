@@ -2,6 +2,7 @@
 #import "TWRootViewController.h"
 #import "TWPlayerViewController.h"
 #import "TWNavigator.h"
+#import "TWExternalOpen.h"
 #import "TWTLSSocket.h"
 #import "TWMediaProxy.h"
 #import "TWImageLoader.h"
@@ -116,10 +117,12 @@ static BOOL TWPressView(UIView *v, NSString *text)
 }
 
 // twitcher:channel/<login> opens the channel page, twitcher:watch/<login> the player, twitcher:video/<id> a past
-// broadcast, twitcher:clip/<slug> a clip and twitcher:search?q=<text> the search. Over SSH (uiopen) a few commands help
-// checking the app: twitcher:snapshot and twitcher:screen write tmp/screen.png, twitcher:press?n=1 presses a button of
-// the alert on screen, press?title=Chat a button, segment, switch row or list row with that text, twitcher:tab?n=1
-// switches the tab and twitcher:stats logs the memory in use. The commands need a file named "debug" in the app's
+// broadcast, twitcher:clip/<slug> a clip, twitcher:search?q=<text> the search and twitcher:open?url=<percent-encoded
+// twitch.tv link> whatever that link points at (channel, video, clip, category; the sister apps hand Twitch links over
+// this way). Over SSH (uiopen) a few commands help checking the app: twitcher:snapshot and twitcher:screen write
+// tmp/screen.png, twitcher:press?n=1 presses a button of the alert on screen, press?title=Chat a button, segment, switch
+// row or list row with that text, twitcher:tab?n=1 switches the tab, twitcher:link?url=<link> acts like a tap on that
+// link in a text and twitcher:stats logs the memory in use. The commands need a file named "debug" in the app's
 // Documents folder.
 - (BOOL)application:(UIApplication *)application openURL:(NSURL *)url sourceApplication:(NSString *)sourceApplication annotation:(id)annotation
 {
@@ -145,38 +148,35 @@ static BOOL TWPressView(UIView *v, NSString *text)
         [self.rootViewController openChannelLogin:[params[@"channel"] lowercaseString] watch:[params[@"watch"] boolValue]];
         return YES;
     }
+    if ([target isEqualToString:@"open"] && [params[@"url"] length]) {
+        // a twitch.tv link from another app: the same parser the tapped links go through
+        NSString *link = params[@"url"];
+        if ([link rangeOfString:@"://"].location == NSNotFound) link = [@"https://" stringByAppendingString:link];
+        BOOL opened = [TWNavigator openTwitchURL:[NSURL URLWithString:link]];
+        if (!opened) TWLog(@"Open: no screen for %@", link);
+        return YES;
+    }
     if ([target isEqualToString:@"search"] && [params[@"q"] length]) {
         [self.rootViewController searchFor:params[@"q"]];
         return YES;
     }
     if ([target hasPrefix:@"video/"]) {
-        NSString *videoId = [target substringFromIndex:@"video/".length];
-        if (!videoId.length) return YES;
-        __weak TWAppDelegate *weakSelf = self;
-        [TWGQL video:videoId completion:^(TWVideo *video, NSError *error) {
-            if (video) [TWNavigator openVideo:video from:weakSelf.rootViewController];
-            else TWLog(@"Video %@: %@", videoId, error.localizedDescription);
-        }];
+        [TWNavigator openVideoId:[target substringFromIndex:@"video/".length] from:self.rootViewController];
         return YES;
     }
     if ([target hasPrefix:@"clip/"]) {
-        NSString *slug = [target substringFromIndex:@"clip/".length];
-        if (!slug.length) return YES;
-        __weak TWAppDelegate *weakSelf = self;
-        [TWGQL clip:slug completion:^(TWClip *clip, NSError *error) {
-            if (!clip) {
-                // (the details are for the title only: the clip plays by its slug alone)
-                TWLog(@"Clip %@: %@", slug, error.localizedDescription);
-                clip = [[TWClip alloc] init];
-                clip.slug = slug;
-                clip.title = slug;
-            }
-            [TWNavigator openClip:clip from:weakSelf.rootViewController];
-        }];
+        [TWNavigator openClipSlug:[target substringFromIndex:@"clip/".length] from:self.rootViewController];
         return YES;
     }
     BOOL debug = [[NSFileManager defaultManager] fileExistsAtPath:[[TWUtils documentsPath] stringByAppendingPathComponent:@"debug"]];
     if (!debug) return YES;
+    if ([target isEqualToString:@"link"]) {
+        // twitcher:link?url=<percent-encoded link> does what a tap on that link in a chat message or a title does
+        // (twitch.tv inside the app, a sister app, the browser chooser), so the sheet can be snapshotted
+        [TWExternalOpen openLink:params[@"url"] from:[TWNavigator presenterFrom:nil] anchor:nil];
+        TWLog(@"Link: %@", params[@"url"] ?: @"(none)");
+        return YES;
+    }
     if ([target isEqualToString:@"stats"]) {
         struct task_basic_info info;
         mach_msg_type_number_t count = TASK_BASIC_INFO_COUNT;

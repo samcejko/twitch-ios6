@@ -1,6 +1,7 @@
 #import "TWPlayerView.h"
 #import "TWTheme.h"
 #import "TWUtils.h"
+#import "TWLinks.h"
 #import "TWCommon.h"
 
 static const NSTimeInterval TWControlsHideDelay = 4.0;
@@ -40,6 +41,7 @@ static const CGFloat TWBarHeight = 44;
 @property (nonatomic) BOOL scrubbing;
 @property (nonatomic) NSTimeInterval duration;
 @property (nonatomic, strong) NSTimer *hideTimer;
+@property (nonatomic, strong) NSArray *titleLinks;    // TWTextLink: the web links in the title
 @end
 
 @implementation TWPlayerView
@@ -228,7 +230,13 @@ static const CGFloat TWBarHeight = 44;
     [self.closeButton setImage:closeIsBack ? [[TWTheme shared] backChevronWhite] : [[TWTheme shared] closeIconWhite] forState:UIControlStateNormal];
     self.closeButton.accessibilityLabel = closeIsBack ? L(@"Back") : L(@"Close");
 }
-- (void)setTitle:(NSString *)title { _title = [title copy]; self.titleLabel.text = title; }
+- (void)setTitle:(NSString *)title
+{
+    _title = [title copy];
+    // (the links in a title are coloured and tappable: -tapped: hands them to the delegate)
+    self.titleLinks = [TWLinks linksInText:title];
+    [TWLinks styleLabel:self.titleLabel text:title links:self.titleLinks linkColor:[[TWTheme shared] linkColorOnDark]];
+}
 - (void)setSubtitle:(NSString *)subtitle { _subtitle = [subtitle copy]; [self.subtitleButton setTitle:subtitle forState:UIControlStateNormal]; }
 - (void)setStatusText:(NSString *)statusText { _statusText = [statusText copy]; self.statusLabel.text = statusText; }
 - (void)setAdBreak:(BOOL)adBreak { _adBreak = adBreak; self.adLabel.hidden = !adBreak; }
@@ -319,6 +327,12 @@ static const CGFloat TWBarHeight = 44;
 - (void)tapped:(UITapGestureRecognizer *)gesture
 {
     CGPoint p = [gesture locationInView:self];
+    // a tap on a title with web links opens them (the controls' frame is the view's, so the label's frame is in our coordinates)
+    if (self.controlsVisible && self.titleLinks.count && CGRectContainsPoint(CGRectInset(self.titleLabel.frame, -4, -6), p)) {
+        [self showControls:YES animated:NO];
+        if ([self.delegate respondsToSelector:@selector(playerView:didTapTitleLinks:fromView:)]) [self.delegate playerView:self didTapTitleLinks:self.titleLinks fromView:self.titleLabel];
+        return;
+    }
     if (self.controlsVisible && !self.controlsLocked) {
         // a tap on the bars is for the buttons (they handle it themselves); one on the picture hides the controls
         if (p.y > self.topInset + TWBarHeight && p.y < self.bounds.size.height - self.safeInsets.bottom - TWBarHeight) [self showControls:NO animated:YES];

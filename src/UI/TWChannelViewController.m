@@ -3,8 +3,10 @@
 #import "TWFavorites.h"
 #import "TWImageLoader.h"
 #import "TWNavigator.h"
+#import "TWExternalOpen.h"
 #import "TWTheme.h"
 #import "TWUtils.h"
+#import "TWLinks.h"
 #import "TWCommon.h"
 #import <QuartzCore/QuartzCore.h>
 
@@ -28,6 +30,11 @@ typedef NS_ENUM(NSInteger, TWChannelTab) {
 @property (nonatomic, strong) UILabel *followersLabel;
 @property (nonatomic, strong) UILabel *statusLabel;
 @property (nonatomic, strong) UILabel *bioLabel;
+// the texts of the two labels and the web links in them (coloured, a tap opens them)
+@property (nonatomic, copy) NSString *statusText;
+@property (nonatomic, copy) NSString *bioText;
+@property (nonatomic, strong) NSArray *statusLinks;
+@property (nonatomic, strong) NSArray *bioLinks;
 @property (nonatomic, strong) UIButton *watchButton;
 @property (nonatomic, strong) UIButton *favoriteButton;
 @property (nonatomic, strong) UIView *segmentBar;
@@ -117,12 +124,14 @@ typedef NS_ENUM(NSInteger, TWChannelTab) {
     self.statusLabel.backgroundColor = [UIColor clearColor];
     self.statusLabel.font = [UIFont systemFontOfSize:13];
     self.statusLabel.numberOfLines = 2;
+    [self.statusLabel addGestureRecognizer:[[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(statusTapped)]];
     [self.header addSubview:self.statusLabel];
 
     self.bioLabel = [[UILabel alloc] initWithFrame:CGRectZero];
     self.bioLabel.backgroundColor = [UIColor clearColor];
     self.bioLabel.font = [UIFont systemFontOfSize:13];
     self.bioLabel.numberOfLines = 0;
+    [self.bioLabel addGestureRecognizer:[[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(bioTapped)]];
     [self.header addSubview:self.bioLabel];
 
     self.watchButton = [UIButton buttonWithType:UIButtonTypeCustom];
@@ -182,6 +191,28 @@ typedef NS_ENUM(NSInteger, TWChannelTab) {
     self.segmentBar.backgroundColor = t.isDark ? [UIColor colorWithWhite:0.12 alpha:0.97] : [UIColor colorWithWhite:0.93 alpha:0.97];
     [self.periodButton setTitleColor:[t accentColor] forState:UIControlStateNormal];
     [self updateFavoriteButton];
+    if (self.channel) [self applyHeaderText];   // (attributed text keeps its own colours: drawn again in the new ones)
+}
+
+// The status line (with the stream's title) and the description, their web links coloured and tappable
+- (void)applyHeaderText
+{
+    TWTheme *t = [TWTheme shared];
+    self.statusLabel.textColor = self.channel.stream ? [t primaryTextColor] : [t secondaryTextColor];
+    [TWLinks styleLabel:self.statusLabel text:self.statusText links:self.statusLinks linkColor:[t linkColor]];
+    self.statusLabel.userInteractionEnabled = self.statusLinks.count > 0;
+    [TWLinks styleLabel:self.bioLabel text:self.bioText links:self.bioLinks linkColor:[t linkColor]];
+    self.bioLabel.userInteractionEnabled = self.bioLinks.count > 0;
+}
+
+- (void)statusTapped
+{
+    [TWExternalOpen presentLinks:self.statusLinks from:self anchor:self.statusLabel];
+}
+
+- (void)bioTapped
+{
+    [TWExternalOpen presentLinks:self.bioLinks from:self anchor:self.bioLabel];
 }
 
 - (void)layoutHeader
@@ -276,16 +307,17 @@ typedef NS_ENUM(NSInteger, TWChannelTab) {
     if (!c.bannerURL.length) self.banner.image = nil;
     if (c.stream) {
         NSString *game = c.stream.gameName.length ? [NSString stringWithFormat:@" · %@", c.stream.gameName] : @"";
-        self.statusLabel.text = [NSString stringWithFormat:@"%@ %@%@\n%@", L(@"LIVE:"), c.stream.title.length ? c.stream.title : L(@"Live now"), game, [TWUtils formatViewers:c.stream.viewers]];
-        self.statusLabel.textColor = [t primaryTextColor];
+        self.statusText = [NSString stringWithFormat:@"%@ %@%@\n%@", L(@"LIVE:"), c.stream.title.length ? c.stream.title : L(@"Live now"), game, [TWUtils formatViewers:c.stream.viewers]];
         self.watchButton.hidden = NO;
         [self.watchButton setTitle:L(@"Watch Live") forState:UIControlStateNormal];
     } else {
-        self.statusLabel.text = c.lastBroadcastAt ? [NSString stringWithFormat:L(@"Offline · last live %@"), [TWUtils formatRelativeDate:c.lastBroadcastAt]] : L(@"Offline");
-        self.statusLabel.textColor = [t secondaryTextColor];
+        self.statusText = c.lastBroadcastAt ? [NSString stringWithFormat:L(@"Offline · last live %@"), [TWUtils formatRelativeDate:c.lastBroadcastAt]] : L(@"Offline");
         self.watchButton.hidden = YES;
     }
-    self.bioLabel.text = c.bio;
+    self.bioText = c.bio;
+    self.statusLinks = [TWLinks linksInText:self.statusText];
+    self.bioLinks = [TWLinks linksInText:self.bioText];
+    [self applyHeaderText];
     [self updateFavoriteButton];
     [self layoutHeader];
 }

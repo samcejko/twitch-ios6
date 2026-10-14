@@ -988,10 +988,15 @@ static const NSTimeInterval TWLivePauseReloadAfter = 40;   // paused this long: 
 
 - (void)chatView:(TWChatView *)chatView didTapLink:(NSString *)url
 {
-    NSURL *u = [NSURL URLWithString:url];
-    if (!u) return;
-    // a chooser: copy the link, or open it in Safari or Surfari (the user's own iOS 6 browser)
-    [TWExternalOpen presentShareSheetForURL:u from:self anchor:nil];
+    // twitch.tv links open inside the app, YouTube/Kick/TikTok ones in the sister app when it is installed, the rest
+    // in the browser (a chooser on iOS 6, Safari directly on newer iOS)
+    [TWExternalOpen openLink:url from:self anchor:nil];
+}
+
+- (void)playerView:(TWPlayerView *)view didTapTitleLinks:(NSArray *)links fromView:(UIView *)anchor
+{
+    // the stream's, video's or clip's title holds web links: one opens, several are offered in a sheet
+    [TWExternalOpen presentLinks:links from:self anchor:anchor];
 }
 
 - (void)enterChatText:(NSString *)text send:(BOOL)send

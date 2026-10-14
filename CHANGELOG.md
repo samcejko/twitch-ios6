@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.2.1 (2026-10-14)
+
+- Links in chat messages, in the channel page (the stream's title and the description) and in the titles of streams,
+  past broadcasts and clips in the player are coloured and tappable; bare addresses such as `twitch.tv/name` or
+  `youtu.be/...` count too. A long press on a chat link copies it.
+- Links to twitch.tv open inside Twitcher: channels, past broadcasts, clips, categories, searches. Other apps can hand a
+  Twitch link over with `twitcher:open?url=<percent-encoded link>`.
+- Links to YouTube, Kick and TikTok offer the sister app (Tubie, Kicker, TikTak) first when it is installed.
+- Every other link: on iOS 6 the chooser offers Safari and, when installed, Surfari; iOS 7 and newer open Safari
+  directly (and use the system's share sheet where a link is shared).
+- The 32-bit package now declares iOS 6.0 up to 10.x, so that package managers on 64-bit devices with a rootful
+  jailbreak do not offer it; the arm64 package stays iOS 15 and newer.
+
 ## 0.2.0 (2026-10-14)
 
 - A second build for 64-bit devices with iOS 14–17 (iPhone X and newer), from the same source tree: the `.deb` with

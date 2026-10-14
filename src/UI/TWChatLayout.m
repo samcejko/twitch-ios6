@@ -3,6 +3,7 @@
 #import "TWSettings.h"
 #import "TWTheme.h"
 #import "TWUtils.h"
+#import "TWLinks.h"
 #import "TWCommon.h"
 
 static NSString * const TWChatImageAttribute = @"TWChatImage";   // NSNumber: index into imageSlots
@@ -131,14 +132,6 @@ static NSDictionary *TWTextAttributes(CTFontRef font, UIColor *color)
 {
     return @{ (__bridge NSString *)kCTFontAttributeName: (__bridge id)font,
               (__bridge NSString *)kCTForegroundColorAttributeName: (__bridge id)color.CGColor };
-}
-
-static BOOL TWLooksLikeLink(NSString *word)
-{
-    NSString *lower = [word lowercaseString];
-    if ([lower hasPrefix:@"http://"] || [lower hasPrefix:@"https://"]) return word.length > 10;
-    if ([lower hasPrefix:@"www."] && [lower rangeOfString:@"."].location != NSNotFound) return word.length > 6;
-    return NO;
 }
 
 + (TWChatLayout *)layoutForMessage:(TWChatMessage *)message style:(TWChatStyle *)style
@@ -327,16 +320,24 @@ static BOOL TWLooksLikeLink(NSString *word)
             [self appendEmote:emote to:s slots:slots height:emoteHeight font:font retina:retina];
         } else if ([word hasPrefix:@"@"] && word.length > 1) {
             [s appendAttributedString:[[NSAttributedString alloc] initWithString:word attributes:strong]];
-        } else if (TWLooksLikeLink(word)) {
-            TWChatLink *l = [[TWChatLink alloc] init];
-            l.url = [[word lowercaseString] hasPrefix:@"www."] ? [@"http://" stringByAppendingString:word] : word;
-            l.range = NSMakeRange(s.length, word.length);
-            [links addObject:l];
-            NSMutableDictionary *attributes = [link mutableCopy];
-            attributes[TWChatLinkAttribute] = @(links.count - 1);
-            [s appendAttributedString:[[NSAttributedString alloc] initWithString:word attributes:attributes]];
         } else {
-            [s appendAttributedString:[[NSAttributedString alloc] initWithString:word attributes:plain]];
+            // a link (http://, www., twitch.tv/xyz...) in the link colour; brackets and punctuation around it stay plain
+            NSRange linkRange = NSMakeRange(0, 0);
+            NSString *url = [TWLinks urlInWord:word range:&linkRange];
+            if (url) {
+                if (linkRange.location > 0) [s appendAttributedString:[[NSAttributedString alloc] initWithString:[word substringToIndex:linkRange.location] attributes:plain]];
+                TWChatLink *l = [[TWChatLink alloc] init];
+                l.url = url;
+                l.range = NSMakeRange(s.length, linkRange.length);
+                [links addObject:l];
+                NSMutableDictionary *attributes = [link mutableCopy];
+                attributes[TWChatLinkAttribute] = @(links.count - 1);
+                [s appendAttributedString:[[NSAttributedString alloc] initWithString:[word substringWithRange:linkRange] attributes:attributes]];
+                NSUInteger after = NSMaxRange(linkRange);
+                if (after < word.length) [s appendAttributedString:[[NSAttributedString alloc] initWithString:[word substringFromIndex:after] attributes:plain]];
+            } else {
+                [s appendAttributedString:[[NSAttributedString alloc] initWithString:word attributes:plain]];
+            }
         }
         pos = end;
     }
